@@ -1,8 +1,9 @@
 SCD
 ===
 
-High quality, scalable and parallel community detection for large real graphs.
-SCD is the implementation of the algorithm described in this paper from WWW 2014.
+This program is an implementation of the community detection algorithm described in the paper titled
+
+[High quality, scalable and parallel community detection for large real graphs.](https://www.dama.upc.edu/publications/fp546prat.pdf) Arnau Prat-Pérez, David Dominguez-Sal, Josep-Lluis Larriba-Pey - WWW 2014.
 
 
 Compile
