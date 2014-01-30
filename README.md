@@ -5,7 +5,8 @@ High quality, scalable and parallel community detection for large real graphs.
 SCD is the implementation of the algorithm described in this paper from WWW 2014.
 
 
-=== Compiling ===
+Compile
+===
 
 SCD uses CMake 2.8.2 or greater to compile. In order to build SCD, move to SCD directory and type:
 
@@ -24,7 +25,8 @@ cmake -DCMAKE_BUILD_TYPE=Debug ..
 make
 ``` 
 
-== Execution ==
+Execution
+===
 
 To execute SCD type, move to the build folder and type:
 
@@ -49,7 +51,7 @@ Therefore, if our network file is at ".networks/network.dat", we will type:
 ./scd -f ./networks/network.dat
 ```
 
-This will run the program, and the will output the communities found at "./communities.dat", which
+This will run the program, and will output the communities found at "./communities.dat", which contains
 a community per line, represented as a list of identifiers.
 
 Now, we summarize the options of the program:
