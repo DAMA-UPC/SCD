@@ -80,8 +80,8 @@ int main(int argc, char ** argv) {
 		return 1;
 	}
 
-	if( !outputFileName ) {
-		outputFileName = new char_t[32];
+	if( !outputFileNameSet ) {
+		outputFileName = new char_t[512];
 		sprintf(outputFileName,"communities.dat");
 	}
 
@@ -140,6 +140,9 @@ int main(int argc, char ** argv) {
 	printf("Print partition time: %lu ms\n", endTime - initTime);
 	FreeResources(&partition);
 	printf("Total execution time: %lu ms\n", totalTime);
-	delete [] outputFileName;
+
+	if( !outputFileNameSet ) {
+		delete [] outputFileName;
+	}
 	return 0;
 }
