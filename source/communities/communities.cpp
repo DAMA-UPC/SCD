@@ -654,7 +654,7 @@ namespace scd {
 
 
 		FreeResources(&bestPartition);
-		printf("WCC: %f\n", partition->m_WCC / graph->GetNumNodes()) ;
+//		printf("WCC: %f\n", partition->m_WCC / graph->GetNumNodes()) ;
 		return 0;
 	}
 }

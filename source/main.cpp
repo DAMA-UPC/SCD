@@ -138,8 +138,18 @@ int main(int argc, char ** argv) {
 	endTime = (time.tv_sec * 1000) + (time.tv_usec / 1000);
 	totalTime += endTime - initTime;
 	printf("Print partition time: %lu ms\n", endTime - initTime);
+
+
+
+	printf("\n");
+	printf("\n");
+	printf("*******************************************************\n");
+	printf("%-32s %-10d\n","Number of Communities:", partition.m_NumCommunities);
+	printf("%-32s %-10f\n","WCC:", partition.m_WCC / (float32_t)graph.GetNumNodes() );
+	printf("%-32s %-10lu ms\n", "Total execution time:", totalTime);
+	printf("*******************************************************\n");
+
 	FreeResources(&partition);
-	printf("Total execution time: %lu ms\n", totalTime);
 
 	if( !outputFileNameSet ) {
 		delete [] outputFileName;
