@@ -3,7 +3,7 @@ SCD
 
 This program is an implementation of the community detection algorithm described in the paper titled
 
-[High quality, scalable and parallel community detection for large real graphs.](https://www.dama.upc.edu/publications/fp546prat.pdf) Arnau Prat-Pérez, David Dominguez-Sal, Josep-Lluis Larriba-Pey - WWW 2014.
+[High quality, scalable and parallel community detection for large real graphs.](http://www.dama.upc.edu/publications) Arnau Prat-Pérez, David Dominguez-Sal, Josep-Lluis Larriba-Pey - WWW 2014.
 
 
 Compile
