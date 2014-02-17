@@ -28,7 +28,7 @@ namespace scd
 			 * 	@param[in] list2 The second array.	
 			 * 	@param[in] size2 The size of the second array.
 			 * 	@return The size of the intersection.*/
-	uint32_t 	Intersect( const uint32_t* list1, const uint32_t size1, const uint32_t* list2, const uint32_t size2 );
+	uint32_t 	Intersect( /*const*/ uint32_t* list1, const uint32_t size1, /*const*/ uint32_t* list2, const uint32_t size2 );
 
 			/**	@brief Computes the WCC of a node against a community.
 			 * 	@param[in] graph The graph.

@@ -60,6 +60,22 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 using namespace scd;
 
+
+uint64_t startClock(){
+        timeval time;
+        gettimeofday(&time, NULL);
+        uint64_t initTime = (time.tv_sec * 1000) + (time.tv_usec / 1000);
+        return initTime;
+}
+
+uint64_t stopClock(uint64_t initTime){
+        timeval time;
+        gettimeofday(&time, NULL);
+        uint64_t endTime = (time.tv_sec * 1000) + (time.tv_usec / 1000);
+        return endTime - initTime;
+}
+
+
 int main(int argc, char ** argv) {
 
 	bool graphFileNameSet = false;
@@ -85,60 +101,65 @@ int main(int argc, char ** argv) {
 		sprintf(outputFileName,"communities.dat");
 	}
 
+        CGraph graph;
 	uint64_t totalTime = 0;
-	timeval time;
-	gettimeofday(&time, NULL);
-	uint64_t initTime = (time.tv_sec * 1000) + (time.tv_usec / 1000);
-	printf( "Graph: %s\n", graphFileName ); 
-	printf( "OutputFile: %s\n", outputFileName );
-	CGraph graph;
-	graph.Load(graphFileName,numThreads);
-	gettimeofday(&time, NULL);
-	uint64_t endTime = (time.tv_sec * 1000) + (time.tv_usec / 1000);
-	totalTime += endTime - initTime;
-	printf("Load time: %lu ms\n", endTime - initTime);
+        uint64_t initTime, spendTime;
 
-	gettimeofday(&time, NULL);
-	initTime = (time.tv_sec * 1000) + (time.tv_usec / 1000);
+        
+        //==================== LOAD THE GRAPH ==================================
+	initTime = startClock();
+	printf( "Graph: %s\n", graphFileName ); 
+	printf( "OutputFile: %s\n", outputFileName );	
+	graph.Load(graphFileName,numThreads);
+	spendTime = stopClock(initTime);
+	totalTime += spendTime;
+	printf("Load time: %lu ms\n", spendTime);
+        //======================================================================
+
+        
+	//================ REMOVE EDGES WITHOUT TRIANGLES ======================
+	initTime = startClock();
 	printf("Removing edges without triangles ...\n");
 	graph.RemoveEdgesNoTriangles(numThreads);
-	gettimeofday(&time, NULL);
-	endTime = (time.tv_sec * 1000) + (time.tv_usec / 1000);
-	totalTime += endTime - initTime;
-	printf("Removing edges without triangles time: %lu ms\n", endTime - initTime);
+        spendTime = stopClock(initTime);
+	totalTime += spendTime;
+	printf("Removing edges without triangles time: %lu ms\n", spendTime);
+        //======================================================================
 
-	gettimeofday(&time, NULL);
-	initTime = (time.tv_sec * 1000) + (time.tv_usec / 1000);
+        
+	//=================== INITIALIZE PARTITIONS ============================
+	initTime = startClock();
 	CommunityPartition partition;
 	printf("Computing initial partition ...\n");
 	if(InitializeSimplePartition(&graph,&partition)) {
 		printf("Error computing initial partition\n");
 		return 1;
 	}
-	gettimeofday(&time, NULL);
-	endTime = (time.tv_sec * 1000) + (time.tv_usec / 1000);
-	totalTime += endTime - initTime;
-	printf("Initial partition time: %lu ms\n", endTime - initTime);
+        spendTime = stopClock(initTime);
+	totalTime += spendTime;
+	printf("Initial partition time: %lu ms\n", spendTime);
+        //======================================================================
 
-	gettimeofday(&time, NULL);
-	initTime = (time.tv_sec * 1000) + (time.tv_usec / 1000);
-	if(ImproveCommunities( &graph, &partition, numThreads) ) {
+        
+        //================ TRANSFER NODES AMONG PARTITIONS =====================
+        initTime = startClock();
+        if(ImproveCommunities( &graph, &partition, numThreads) ) {
 		printf("Error while improving communities\n");
 		return 1;
 	}
-	gettimeofday(&time, NULL);
-	endTime = (time.tv_sec * 1000) + (time.tv_usec / 1000);
-	totalTime += endTime - initTime;
-	printf("Improvement execution time: %lu ms\n", endTime - initTime);
+	spendTime = stopClock(initTime);
+	totalTime += spendTime;
+	printf("Improvement execution time: %lu ms\n", spendTime);
+        //======================================================================
 
-	gettimeofday(&time, NULL);
-	initTime = (time.tv_sec * 1000) + (time.tv_usec / 1000);
+        
+        //======================== PRINT RESULTS ===============================
+        initTime = startClock();
 	PrintPartition( &graph, &partition, outputFileName );
-	gettimeofday(&time, NULL);
-	endTime = (time.tv_sec * 1000) + (time.tv_usec / 1000);
-	totalTime += endTime - initTime;
-	printf("Print partition time: %lu ms\n", endTime - initTime);
-
+	spendTime = stopClock(initTime);
+	totalTime += spendTime;
+	printf("Print partition time: %lu ms\n", spendTime);
+        //======================================================================
 
 
 	printf("\n");
@@ -155,4 +176,8 @@ int main(int argc, char ** argv) {
 		delete [] outputFileName;
 	}
 	return 0;
+
 }
+
+
+

@@ -108,5 +108,6 @@ private:
 	uint32_t* 		m_TotalTriangles;	/**< @brief The number of triangles a node belongs to.*/
 	double64_t		m_CC;				/**< @brief The clustering coefficient of the graph.*/
 };
+
 }
 #endif

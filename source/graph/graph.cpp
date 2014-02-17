@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <string.h>
 #include <sys/time.h>
 #include <omp.h>
+#include <cstdlib>
 
 namespace scd {
 
@@ -35,6 +36,10 @@ namespace scd {
 		if( id2 < id1 ) return 1;
 		return 0;
 	}
+        
+
+        
+        
 
 	CGraph::CGraph() :
 	m_NumNodes(0),
@@ -79,6 +84,7 @@ namespace scd {
 			printf( "Graph: Error Openning Graph File\n" );
 			return 1;
 		}
+             
 
 		printf( "Graph: Relabeling nodes ...\n" );
 		timeval time;
@@ -160,7 +166,7 @@ namespace scd {
 		//We set the file cursor to the beginning.
 		inFile.close();
 		inFile.open((const char *)fileName);
-		uint32_t indexEdges2 = 0;
+		
 		m_Adjacencies = new uint32_t[m_NumEdges*2];
 		if( !m_Adjacencies ) {
 			printf( "Graph: Error allocating adjacencies\n" );
@@ -194,6 +200,7 @@ namespace scd {
 		gettimeofday(&time, NULL);
 		initTime = (time.tv_sec * 1000) + (time.tv_usec / 1000);
 		//Sorting adjacencies.
+                #pragma omp parallel for schedule(dynamic, 32)
 		for(uint32_t i = 0; i < m_NumNodes; i++ ) {
 			qsort(&m_Adjacencies[m_Nodes[i].m_AdjacencyIndex], m_Nodes[i].m_Degree, sizeof(uint32_t),Compare_Ids);
 		}
@@ -218,7 +225,7 @@ namespace scd {
 		printf( "Graph: Graph Loaded\n" );
 		printf( "Graph: Number of Nodes: %u\n", m_NumNodes );
 		printf( "Graph: Number of Edges: %u\n", m_NumEdges );
-		printf( "Graph: Clustering coefficient: %f\n", m_CC );
+		//printf( "Graph: Clustering coefficient: %f\n", m_CC ); //Not available here
 		printf( "Graph: Average Degree: %f\n", averageDegree );
 		printf( "Graph: Maximum Degree: %f\n", maxDegree );
 		printf( "Graph: Memory \n" );
@@ -237,6 +244,15 @@ namespace scd {
 	}
 
 
+        static int compareInt (const void * a, const void * b)
+        //int compareInt (uint32_t* a, uint32_t* b)
+        {
+            if ( *(int*)a <  *(int*)b ) return -1;
+            if ( *(int*)a >  *(int*)b ) return 1;
+            if ( *(int*)a == *(int*)b ) return 0;        
+        }
+        
+        
 	uint32_t	CGraph::RemoveEdgesNoTriangles( uint32_t numThreads) {
 		omp_set_num_threads(numThreads);
 		m_TotalTriangles = new uint32_t[m_NumNodes];
@@ -248,28 +264,23 @@ namespace scd {
 		uint32_t numEdgesRemoved = 0;
 		uint32_t newAdjacencyIndex = 0;
 		uint32_t* edgesTriangles  = new uint32_t[m_NumEdges*2];
+                
 		#pragma omp parallel for schedule(dynamic, 32)
 		for(uint32_t i = 0; i < m_NumNodes; i++ ) {
-			uint32_t edgesTrianglesIndex = m_Nodes[i].m_AdjacencyIndex;
-			m_TotalTriangles[i] = 0;
-			uint32_t newDegree = 0;
+                        uint32_t edgesTrianglesIndex = m_Nodes[i].m_AdjacencyIndex;
+			m_TotalTriangles[i] = 0;			
 			uint32_t* adjacencyList1 = &m_Adjacencies[m_Nodes[i].m_AdjacencyIndex];
 			for(uint32_t j = 0; j < m_Nodes[i].m_Degree; j++) {
 				uint32_t* adjacencyList2 = &m_Adjacencies[m_Nodes[adjacencyList1[j]].m_AdjacencyIndex];
 				if( i < adjacencyList1[j]) { 
 					uint32_t triangles =  Intersect(adjacencyList1, m_Nodes[i].m_Degree, adjacencyList2, m_Nodes[adjacencyList1[j]].m_Degree);
 					edgesTriangles[edgesTrianglesIndex] = triangles;
-					bool check = false;
-					for( uint32_t k = 0; k < m_Nodes[adjacencyList1[j]].m_Degree; k++ ) {
-						if( adjacencyList2[k] == i ) {
-							edgesTriangles[m_Nodes[adjacencyList1[j]].m_AdjacencyIndex + k ] = triangles;
-							check = true;
-							break;
-						}
-					}
-					if(!check) {
-						printf("ERROR when computing triangles.");
-					}
+                                        
+                                        uint32_t k = (uint32_t*) bsearch(&i, adjacencyList2, 
+                                                       m_Nodes[adjacencyList1[j]].m_Degree, sizeof(uint32_t), compareInt)
+                                                     - adjacencyList2;                                        
+                                        assert(k !=  m_Nodes[adjacencyList1[j]].m_Degree); // "ERROR when computing triangles."                                        
+                                        edgesTriangles[m_Nodes[adjacencyList1[j]].m_AdjacencyIndex + k ] = triangles;
 				}
 				edgesTrianglesIndex++;
 			}
@@ -278,19 +289,20 @@ namespace scd {
 		uint32_t edgesTrianglesIndex = 0;
 		for(uint32_t i = 0; i < m_NumNodes; i++ ) {
 			m_TotalTriangles[i] = 0;
-			uint32_t newDegree = 0;
-			uint32_t * tempAdjacencies = new uint32_t[m_Nodes[i].m_Degree];
-			uint32_t* adjacencyList1 = &m_Adjacencies[m_Nodes[i].m_AdjacencyIndex];
+			uint32_t  newDegree = 0;
+			uint32_t* tempAdjacencies = new uint32_t[m_Nodes[i].m_Degree];
+			uint32_t* adjacencyList1  = &m_Adjacencies[m_Nodes[i].m_AdjacencyIndex];
 			for(uint32_t j = 0; j < m_Nodes[i].m_Degree; j++) {
 				uint32_t triangles = edgesTriangles[edgesTrianglesIndex++];
-					if( triangles > 0 ) {
-						tempAdjacencies[newDegree] = adjacencyList1[j];
-						newDegree++;
-					} else {
-						numEdgesRemoved++;
-					}
-					m_TotalTriangles[i] += triangles;
+                                if( triangles > 0 ) {
+                                    tempAdjacencies[newDegree] = adjacencyList1[j];
+                                    newDegree++;
+                                } else {
+                                    numEdgesRemoved++;
+                                }
+                                m_TotalTriangles[i] += triangles;
 			}
+                        
 			memcpy(&m_Adjacencies[newAdjacencyIndex], tempAdjacencies, sizeof(uint32_t)*newDegree);
 			m_Nodes[i].m_Degree = newDegree;
 			m_Nodes[i].m_AdjacencyIndex = newAdjacencyIndex;
@@ -299,10 +311,12 @@ namespace scd {
 			uint32_t auxPossibleTriangles = m_Nodes[i].m_Degree*(m_Nodes[i].m_Degree - 1);
 			if( auxPossibleTriangles > 0 ) {
 				m_CC += m_TotalTriangles[i] / (double64_t)auxPossibleTriangles;
-			}
+			}                        
 		}
-			delete [] edgesTriangles;
+                
+                delete [] edgesTriangles;
 		m_CC /= m_NumNodes;
+                std::cout << "m_cc inicial: " << m_CC << std::endl;
 		m_NumEdges-=(numEdgesRemoved/2);
 		return 0;
 	}
