@@ -17,47 +17,32 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define TYPES_H
 
 namespace scd {
+    #ifndef SCD_THREAD_BLOCK_SIZE
+    #define SCD_THREAD_BLOCK_SIZE 32 
+    #endif
 
-	typedef bool bool_t;
-	typedef unsigned char uchar_t;
-	typedef char char_t;
-	typedef short int uint16_t;
-	typedef unsigned int uint32_t;
-	typedef int int32_t;
-	typedef long unsigned uint64_t;
-	typedef float float32_t;
-	typedef double double64_t;
+    #ifndef SCD_SCHEDULING
+    #define SCD_SCHEDULING dynamic	
+    #endif
 
-	/** @brief This struct represents a node in the graph.*/
-	struct Node {
-		uint32_t m_Degree; 		/**< @brief The degree of the node.*/
-		uint32_t m_AdjacencyIndex;	/**< @brief The index into the adjacency vector where the adjacencies lay*/
-	};
+    typedef bool bool_t;
+    typedef unsigned char uchar_t;
+    typedef char char_t;
+    typedef short int uint16_t;
+    typedef unsigned int uint32_t;
+    typedef int int32_t;
+    typedef long unsigned uint64_t;
+    typedef float float32_t;
+    typedef double double64_t;
 
-	struct Edge {
-		uint32_t head;
-		uint32_t tail;
+    /** @brief This struct represents a node in the graph.*/
+    struct Node {
+        uint32_t m_Degree; 		/**< @brief The degree of the node.*/
+        uint32_t m_AdjacencyIndex;	/**< @brief The index into the adjacency vector where the adjacencies lay*/
+    };
 
-		bool operator<(const Edge & e) const
-		{
-			if(tail < e.tail)
-			{
-				return true;
-			}
-			else
-			{
-				if(tail == e.tail)
-				{
-					if(head < e.head)
-					{
-						return true;
-					}
-				}
-			}
-			return false;
 
-		}
-	};
+        
 };
 
 #endif

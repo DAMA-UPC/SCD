@@ -18,6 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace scd {
 
+    
     uint32_t Intersect(/*const*/ uint32_t* list1, const uint32_t size1, /*const*/ uint32_t* list2, const uint32_t size2) {
         uint32_t triangles = 0;
 
@@ -25,25 +26,12 @@ namespace scd {
         uint32_t* endList2 = list2 + size2;
 
 
-        //            // v1.1
-        //            while(list1 != endList1){
-        //                while(list2 != endList2 && *list1 > *list2){
-        //                    list2++;
-        //                }
-        //                
-        //                if (*list1 == *list2){
-        //                    triangles++;
-        //                }                
-        //                list1++;
-        //            }
-
-
         // v2.0
         while (list1 != endList1 && list2 != endList2) {
             if (*list1 < *list2) {
-                list1++;
+                list1++;                
             } else if (*list1 > *list2) {
-                list2++;
+                list2++;                
             } else { //(*list1 == *list2){ //triangle found
                 triangles++;
                 list1++;
@@ -51,28 +39,19 @@ namespace scd {
             }
         }
 
-        // v 1.0
-        //		uint32_t i = 0;
-        //		uint32_t j = 0;
-        //		uint32_t triangles = 0;
-        //		while( i < size1 && j < size2 ) {
-        //			if( list1[i] < list2[j] ) {
-        //				i++;
-        //			} 
-        //			else if( list1[i] > list2[j] ) {
-        //				j++;
-        //			} else {
-        //				triangles++;
-        //				i++;
-        //				j++;
-        //			}
-        //		}
         return triangles;
     }
+    
+    
+    
 
-    double64_t ComputeWCC(const CGraph * graph, const uint32_t * communities, const uint32_t numCommunities, const uint32_t* labelsIndices, const uint32_t * communitiesInvIndex, double64_t* wccs) {
+    
+    double64_t ComputeWCC(const CGraph * graph, const uint32_t * communities, 
+            const uint32_t numCommunities, const uint32_t* labelsIndices, 
+            const uint32_t * communitiesInvIndex, double64_t* wccs) {    
         double64_t globalWCC = 0;
-        #pragma omp parallel for schedule(static, 16) reduction(+:globalWCC)
+        
+        #pragma omp parallel for schedule(static, 8) reduction(+:globalWCC)
         for (uint32_t i = 0; i < graph->GetNumNodes(); i++) {
             uint32_t communitySize = communitiesInvIndex[labelsIndices[communities[i]]];
             wccs[i] = ComputeWCC(graph, i, communities[i], communities, communitySize);
@@ -81,45 +60,57 @@ namespace scd {
         return globalWCC;
     }
 
-    //TODO: Repassar per posar el codi d'interseccio de triangles
+    
+    double64_t ComputeWCC(const CGraph * graph, uint32_t node, uint32_t communityLabel, 
+            const uint32_t * communities, uint32_t communitySize) {
+        
+        uint32_t        internalTriangles      = 0;
+        uint32_t        internalTriangleDegree = 0;
+        uint32_t        triangleDegree         = 0;
+        uint32_t        node1                  = node;
+        const uint32_t* adjacencies1           = graph->GetNeighbors(node1);
+        uint32_t        degree1                = graph->GetDegree(node1);
+        
+        if (communitySize <= 2 ||graph->GetTotalTriangles(node) == 0) {
+            return 0.0;
+        }
+        
 
-    double64_t ComputeWCC(const CGraph * graph, uint32_t node, uint32_t communityLabel, const uint32_t * communities, uint32_t communitySize) {
-        uint32_t internalTriangles = 0;
-        uint32_t internalTriangleDegree = 0;
-        uint32_t triangleDegree = 0;
-        uint32_t nodeId1 = node;
-        const uint32_t* adjacencies1 = graph->GetNeighbors(nodeId1);
-        uint32_t degree1 = graph->GetDegree(nodeId1);
+        //while(adjacencies1 < endList1){
         for (uint32_t k = 0; k < degree1; k++) {
-            uint32_t nodeId2 = adjacencies1[k];
-            uint32_t degree2 = graph->GetDegree(nodeId2);
-            bool internal = false;
-            if (communities[nodeId2] == communityLabel) {
-                internal = true;
-            }
-            uint32_t i = 0;
-            uint32_t j = 0;
-            bool internalTriangleFound = false;
-            bool triangleFound = false;
-            const uint32_t* adjacencies2 = graph->GetNeighbors(nodeId2);
-            while (i < degree1 && j < degree2) {
-                if (adjacencies1[i] == adjacencies2[j]) {
-                    uint32_t sharedNeighbor = adjacencies1[i];
+            uint32_t        nodeId2  = adjacencies1[k];
+            uint32_t        degree2  = graph->GetDegree(nodeId2);                        
+            bool            internal = (communities[nodeId2] == communityLabel);
+            bool            internalTriangleFound = false;
+            bool            triangleFound         = false;
+            const uint32_t* adjacencies2          = graph->GetNeighbors(nodeId2);
+            
+            uint32_t*  currentNode1     = (uint32_t*) adjacencies1;
+            uint32_t*  currentNode2     = (uint32_t*) adjacencies2;
+            uint32_t*  endAdjacencies1  = (uint32_t*) adjacencies1 + degree1;
+            uint32_t*  endAdjacencies2  = (uint32_t*) adjacencies2 + degree2;
+            
+            while (currentNode1 != endAdjacencies1 && currentNode2 != endAdjacencies2){
+                if (*currentNode1 == *currentNode2){
+                    uint32_t sharedNeighbor = *currentNode1;
                     if (internal && communities[sharedNeighbor] == communityLabel) {
                         internalTriangleFound = true;
                         internalTriangles++;
                     }
                     triangleFound = true;
-                    i++;
-                    j++;
-                } else {
-                    if (adjacencies1[i] < adjacencies2[j]) {
-                        i++;
-                    } else {
-                        j++;
+                    currentNode1++;
+                    currentNode2++;
+                }else  if(*currentNode1 < *currentNode2){
+                    while(*currentNode1 < *currentNode2 && currentNode1 < endAdjacencies1){
+                        currentNode1++;
+                    }
+                }else{
+                    while(*currentNode1 > *currentNode2 && currentNode2 < endAdjacencies2){
+                        currentNode2++;
                     }
                 }
             }
+            
             if (internalTriangleFound) {
                 internalTriangleDegree++;
             }
@@ -127,11 +118,9 @@ namespace scd {
                 triangleDegree++;
             }
         }
-        if (graph->GetTotalTriangles(node) > 0 && communitySize > 1) {
-            return ((internalTriangles / (double64_t) graph->GetTotalTriangles(node)) *
-                    (triangleDegree / (double64_t) (triangleDegree - internalTriangleDegree + communitySize - 1)));
-        }
-        return 0.0;
+        
+        return ((internalTriangles / (double64_t) graph->GetTotalTriangles(node)) *
+               (triangleDegree / (double64_t) (triangleDegree - internalTriangleDegree + communitySize - 1)));
     }
 }
 

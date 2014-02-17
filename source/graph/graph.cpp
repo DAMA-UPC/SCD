@@ -199,8 +199,9 @@ namespace scd {
 		printf( "Graph: Sorting adjacencies ...\n" );
 		gettimeofday(&time, NULL);
 		initTime = (time.tv_sec * 1000) + (time.tv_usec / 1000);
+                
 		//Sorting adjacencies.
-                #pragma omp parallel for schedule(dynamic, 32)
+                #pragma omp parallel for schedule(static, 16)
 		for(uint32_t i = 0; i < m_NumNodes; i++ ) {
 			qsort(&m_Adjacencies[m_Nodes[i].m_AdjacencyIndex], m_Nodes[i].m_Degree, sizeof(uint32_t),Compare_Ids);
 		}
@@ -232,7 +233,7 @@ namespace scd {
 		printf( "..............\n" );
 		uint64_t memNodes = (char*)&m_Nodes[m_NumNodes] - (char*)&m_Nodes[0];
 		uint64_t memEdges = (char*)&m_Adjacencies[m_NumEdges*2] - (char*)&m_Adjacencies[0];
-		uint64_t memMap = (char*)&m_Map[m_NumNodes-1] - (char*)&m_Map[0];
+		uint64_t memMap   = (char*)&m_Map[m_NumNodes-1] - (char*)&m_Map[0];
 		uint64_t memTotalTriangles =  (char*)&m_TotalTriangles[m_NumNodes-1] - (char*)&m_TotalTriangles[0];
 		printf( "%-16s %-10lu Bytes\n", "Nodes:", memNodes );
 		printf( "%-16s %-10lu Bytes\n", "Adjacencies:", memEdges );
@@ -244,12 +245,11 @@ namespace scd {
 	}
 
 
-        static int compareInt (const void * a, const void * b)
-        //int compareInt (uint32_t* a, uint32_t* b)
+        static int compareInt (const void * a, const void * b)        
         {
-            if ( *(int*)a <  *(int*)b ) return -1;
             if ( *(int*)a >  *(int*)b ) return 1;
-            if ( *(int*)a == *(int*)b ) return 0;        
+            if ( *(int*)a <  *(int*)b ) return -1;
+            if ( *(int*)a == *(int*)b ) return 0;   
         }
         
         
