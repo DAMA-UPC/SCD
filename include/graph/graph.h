@@ -65,7 +65,7 @@ public:
 	/**	@brief Gets the neighbors of a node.
 	*	@param nodeId The identifier of the node.
 	*	@return	The neighbors of the node.*/
-	inline const uint32_t * GetNeighbors(uint32_t nodeId) const {
+	inline const uint32_t*  GetNeighbors(uint32_t nodeId) const {
 		assert(nodeId<m_NumNodes);
 		return &m_Adjacencies[m_Nodes[nodeId].m_AdjacencyIndex];
 	}
@@ -108,5 +108,6 @@ private:
 	uint32_t* 		m_TotalTriangles;	/**< @brief The number of triangles a node belongs to.*/
 	double64_t		m_CC;				/**< @brief The clustering coefficient of the graph.*/
 };
+
 }
 #endif

@@ -89,6 +89,100 @@ void PrintUsage() {
 
 int main(int argc, char ** argv) {
 
+<<<<<<< HEAD
+	bool graphFileNameSet = false;
+	bool outputFileNameSet = false;
+	bool numThreadsSet = false;
+	char_t * graphFileName = NULL;
+	char_t * outputFileName = NULL;
+	uint32_t numThreads = 1;
+
+	for( uint32_t i = 1; i < argc; i++) {
+		CHECK_ARGUMENT_STRING(i, "-f", graphFileName, graphFileNameSet)
+		CHECK_ARGUMENT_STRING(i, "-o", outputFileName, outputFileNameSet)
+		CHECK_ARGUMENT_INT(i, "-n", numThreads , numThreadsSet)
+	}
+
+	if( !graphFileNameSet ) {
+		printf("Graph filename not set\n");
+		return 1;
+	}
+
+	if( !outputFileNameSet ) {
+		outputFileName = new char_t[512];
+		sprintf(outputFileName,"communities.dat");
+	}
+
+	uint64_t totalTime = 0;
+	timeval time;
+	gettimeofday(&time, NULL);
+	uint64_t initTime = (time.tv_sec * 1000) + (time.tv_usec / 1000);
+	printf( "Graph: %s\n", graphFileName ); 
+	printf( "OutputFile: %s\n", outputFileName );
+	CGraph graph;
+	graph.Load(graphFileName,numThreads);
+	gettimeofday(&time, NULL);
+	uint64_t endTime = (time.tv_sec * 1000) + (time.tv_usec / 1000);
+	totalTime += endTime - initTime;
+	printf("Load time: %lu ms\n", endTime - initTime);
+
+	gettimeofday(&time, NULL);
+	initTime = (time.tv_sec * 1000) + (time.tv_usec / 1000);
+	printf("Removing edges without triangles ...\n");
+	graph.RemoveEdgesNoTriangles(numThreads);
+	gettimeofday(&time, NULL);
+	endTime = (time.tv_sec * 1000) + (time.tv_usec / 1000);
+	totalTime += endTime - initTime;
+	printf("Removing edges without triangles time: %lu ms\n", endTime - initTime);
+
+	gettimeofday(&time, NULL);
+	initTime = (time.tv_sec * 1000) + (time.tv_usec / 1000);
+	CommunityPartition partition;
+	printf("Computing initial partition ...\n");
+	if(InitializeSimplePartition(&graph,&partition)) {
+		printf("Error computing initial partition\n");
+		return 1;
+	}
+	gettimeofday(&time, NULL);
+	endTime = (time.tv_sec * 1000) + (time.tv_usec / 1000);
+	totalTime += endTime - initTime;
+	printf("Initial partition time: %lu ms\n", endTime - initTime);
+
+	gettimeofday(&time, NULL);
+	initTime = (time.tv_sec * 1000) + (time.tv_usec / 1000);
+	if(ImproveCommunities( &graph, &partition, numThreads) ) {
+		printf("Error while improving communities\n");
+		return 1;
+	}
+	gettimeofday(&time, NULL);
+	endTime = (time.tv_sec * 1000) + (time.tv_usec / 1000);
+	totalTime += endTime - initTime;
+	printf("Improvement execution time: %lu ms\n", endTime - initTime);
+
+	gettimeofday(&time, NULL);
+	initTime = (time.tv_sec * 1000) + (time.tv_usec / 1000);
+	PrintPartition( &graph, &partition, outputFileName );
+	gettimeofday(&time, NULL);
+	endTime = (time.tv_sec * 1000) + (time.tv_usec / 1000);
+	totalTime += endTime - initTime;
+	printf("Print partition time: %lu ms\n", endTime - initTime);
+
+
+	printf("\n");
+	printf("\n");
+	printf("*******************************************************\n");
+	printf("%-32s %-10d\n","Number of Communities:", partition.m_NumCommunities);
+	printf("%-32s %-10f\n","WCC:", partition.m_WCC / (float32_t)graph.GetNumNodes() );
+	printf("%-32s %-10lu ms\n", "Total execution time:", totalTime);
+	printf("*******************************************************\n");
+
+	FreeResources(&partition);
+
+	if( !outputFileNameSet ) {
+		delete [] outputFileName;
+	}
+	return 0;
+=======
     bool graphFileNameSet = false;
     bool outputFileNameSet = false;
     bool numThreadsSet = false;
@@ -173,6 +267,29 @@ int main(int argc, char ** argv) {
 
     //======================== PRINT RESULTS ===============================
     initTime = StartClock();
+    PrintPartition(&graph, &partition, outputFileName);
+    spendTime = StopClock(initTime);
+    totalTime += spendTime;
+    printf("Print partition time: %lu ms\n", spendTime);
+    //======================================================================
+
+
+    printf("\n");
+    printf("\n");
+    printf("*******************************************************\n");
+    printf("%-32s %-10d\n", "Number of Communities:", partition.m_NumCommunities);
+    printf("%-32s %-10f\n", "WCC:", partition.m_WCC / (float32_t) graph.GetNumNodes());
+    printf("%-32s %-10lu ms\n", "Total execution time:", totalTime);
+    printf("*******************************************************\n");
+
+    FreeResources(&partition);
+
+    if (!outputFileNameSet) {
+        delete [] outputFileName;
+    }
+    return 0;
+
+>>>>>>> 438b53701158ca67eefaccade394aa0c370bc33c
 }
 
 
