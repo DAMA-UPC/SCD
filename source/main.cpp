@@ -140,7 +140,6 @@ int main(int argc, char ** argv) {
 	printf("Print partition time: %lu ms\n", endTime - initTime);
 
 
-
 	printf("\n");
 	printf("\n");
 	printf("*******************************************************\n");
