@@ -64,8 +64,9 @@ namespace scd {
 			 * 	@param[in] graph The graph.
 			 * 	@param[out] partition The partition to improve.
 			 * 	@param[in] numThreads The number of threads.
+			 * 	@param[in] lookahead The number of lookahead iterations.
 			 * 	@return 0 if the execution was successful. 0 otherwise.*/ 
-	uint32_t	ImproveCommunities( const CGraph* graph, CommunityPartition* partition, uint32_t numThreads );
+	uint32_t	ImproveCommunities( const CGraph* graph, CommunityPartition* partition, uint32_t numThreads, uint32_t lookahead );
 
 			/**	@brief Copies a partition into another partition.
 			 * 	@param[out] destPartition The destination partition.

@@ -13,12 +13,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <common/types.h>
+#include <common/time.h>
 #include <communities/communities.h>
 #include <graph/graph.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <sys/time.h>
 #include <omp.h>
 
 #define CHECK_ARGUMENT_STRING(index, option,variable,setVariable) \
@@ -61,29 +61,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 using namespace scd;
 
-
-uint64_t StartClock() {
-    timeval time;
-    gettimeofday(&time, NULL);
-    uint64_t initTime = (time.tv_sec * 1000) + (time.tv_usec / 1000);
-    return initTime;
-}
-
-
-uint64_t StopClock(uint64_t initTime) {
-    timeval time;
-    gettimeofday(&time, NULL);
-    uint64_t endTime = (time.tv_sec * 1000) + (time.tv_usec / 1000);
-    return endTime - initTime;
-}
-
-
 void PrintUsage() {
     printf("Usage: scd <flags>\n");
     printf("Availaible flags:\n");
     printf("\t-f [netork file name] : Specifies the network file.\n");
     printf("\t-o [output file name] : Specifies the output file name.\n");
     printf("\t-n [number of threads]: Specifies the number of threads to run the algorithm.\n");
+    printf("\t-l [lookahead size]: Sets the size of the lookahead iterations to look.\n");
 }
 
 
@@ -95,11 +79,14 @@ int main(int argc, char ** argv) {
     char_t * graphFileName = NULL;
     char_t * outputFileName = NULL;
     uint32_t numThreads = omp_get_num_procs();
+    uint32_t lookahead = 5;
+    bool lookaheadSet = false;
 
     for (uint32_t i = 1; i < argc; i++) {
         CHECK_ARGUMENT_STRING(i, "-f", graphFileName, graphFileNameSet)
         CHECK_ARGUMENT_STRING(i, "-o", outputFileName, outputFileNameSet)
         CHECK_ARGUMENT_INT(i, "-n", numThreads, numThreadsSet)
+        CHECK_ARGUMENT_INT(i, "-l", lookahead, lookaheadSet)
     }
 
     if (!graphFileNameSet) {
@@ -120,8 +107,11 @@ int main(int argc, char ** argv) {
     }
 
     CGraph graph;
-    uint64_t totalTime = 0;
-    uint64_t initTime, spendTime;
+    uint64_t totalTime = 0,
+             initTime = 0, 
+             spendTime = 0, 
+             loadingTime = 0,
+             algorithmTime = 0;
 
 
     //==================== LOAD THE GRAPH ==================================
@@ -130,6 +120,7 @@ int main(int argc, char ** argv) {
     printf("OutputFile: %s\n", outputFileName);
     graph.Load(graphFileName, numThreads);
     spendTime = StopClock(initTime);
+    loadingTime = spendTime;
     totalTime += spendTime;
     printf("Load time: %lu ms\n", spendTime);
     //======================================================================
@@ -140,6 +131,7 @@ int main(int argc, char ** argv) {
     printf("Removing edges without triangles ...\n");
     graph.RemoveEdgesNoTriangles(numThreads);
     spendTime = StopClock(initTime);
+    algorithmTime += spendTime;
     totalTime += spendTime;
     printf("Removing edges without triangles time: %lu ms\n", spendTime);
     //======================================================================
@@ -161,11 +153,12 @@ int main(int argc, char ** argv) {
 
     //================ TRANSFER NODES AMONG PARTITIONS =====================
     initTime = StartClock();
-    if (ImproveCommunities(&graph, &partition, numThreads)) {
+    if (ImproveCommunities(&graph, &partition, numThreads, lookahead)) {
         printf("Error while improving communities\n");
         return 1;
     }
     spendTime = StopClock(initTime);
+    algorithmTime += spendTime;
     totalTime += spendTime;
     printf("Improvement execution time: %lu ms\n", spendTime);
     //======================================================================
@@ -173,6 +166,29 @@ int main(int argc, char ** argv) {
 
     //======================== PRINT RESULTS ===============================
     initTime = StartClock();
+    PrintPartition(&graph, &partition, outputFileName);
+    spendTime = StopClock(initTime);
+    totalTime += spendTime;
+    printf("Print partition time: %lu ms\n", spendTime);
+    //======================================================================
+
+
+    printf("\n");
+    printf("\n");
+    printf("*******************************************************\n");
+    printf("%-32s %-10d\n", "Number of Communities:", partition.m_NumCommunities);
+    printf("%-32s %-10f\n", "WCC:", partition.m_WCC / (float32_t) graph.GetNumNodes());
+    printf("%-32s %-10lu ms\n", "Loading time:", loadingTime);
+    printf("%-32s %-10lu ms\n", "Algorithm time:", algorithmTime);
+    printf("%-32s %-10lu ms\n", "Total execution time:", totalTime);
+    printf("*******************************************************\n");
+
+    FreeResources(&partition);
+
+    if (!outputFileNameSet) {
+        delete [] outputFileName;
+    }
+    return 0;
 }
 
 

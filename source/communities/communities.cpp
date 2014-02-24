@@ -14,22 +14,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <algorithm>
 #include <assert.h>
+#include <cmath>
+#include <common/time.h>
 #include <communities/communities.h>
 #include <graph/graph.h>
 #include <map>
 #include <omp.h>
 #include <string.h>
-#include <vector>
-#include <wcc/wcc.h>
 #include <sys/time.h>
 #include <time.h>
-#include <cmath>
+#include <vector>
+#include <wcc/wcc.h>
 
 namespace scd {
-
-
-
-
 
 #define SCD_INVALID_COMMUNITY 0xfffffff
 
@@ -76,10 +73,10 @@ namespace scd {
     }
 
     /** @brief this function is used to compress the laberl space of a partition in order to be comprissed between
-            0 and the actual number of communities - 1.
-            @param[in] graph The graph where the partition belongs.
-            @param[in] communities The array of current labels.
-            @param[out] destCommunities The array where the new labeling will be stored.*/
+     *           0 and the actual number of communities - 1.
+     *  @param[in] graph The graph where the partition belongs.
+     *  @param[in] communities The array of current labels.
+     *  @param[out] destCommunities The array where the new labeling will be stored.*/
     static uint32_t CompressCommunityLabels(const CGraph* graph, const uint32_t * communities, uint32_t * destCommunities) {
         std::map<uint32_t, uint32_t> * map = new std::map<uint32_t, uint32_t>();
         uint32_t label = 0;
@@ -98,9 +95,9 @@ namespace scd {
     }
 
     /** @brief Initializes a partition structure from a labels to communities array.
-            @param[in] graph The graph where the partition belongs.
-            @param[out] partition The partition structure where the partition will be stored.
-            @param[in] communities The array of nodes to community labels from which the partition is initialized.*/
+     *  @param[in] graph The graph where the partition belongs.
+     *  @param[out] partition The partition structure where the partition will be stored.
+     *  @param[in] communities The array of nodes to community labels from which the partition is initialized.*/
     static uint32_t InitializeFromLabelsArray(const CGraph* graph, CommunityPartition* partition, const uint32_t* communities) {
 
         //Initializing default values
@@ -231,13 +228,13 @@ namespace scd {
     }
 
     /** @brief Computes the increment on WCC for inserting a node into a community.
-            @param[in] r The size of the community.
-            @param[in] d_in The number of edges between the inserted vertex and the community.
-            @param[in] d_out The number of edges between the inserted vertex and the rest of the graph.
-            @param[in] c_out The number of edges leaving the community (note that this MUST include d_in).
-            @param[in] p_ext_node The probability that two edges of the vertex pointing to the rest of the graph close a triangle.
-            @param[in] p_in The probability that an edge inside of the community exists.
-            @param[in] p_out The probability that two edges leaving the community close a triangle.*/
+        @param[in] r The size of the community.
+        @param[in] d_in The number of edges between the inserted vertex and the community.
+        @param[in] d_out The number of edges between the inserted vertex and the rest of the graph.
+        @param[in] c_out The number of edges leaving the community (note that this MUST include d_in).
+        @param[in] p_ext_node The probability that two edges of the vertex pointing to the rest of the graph close a triangle.
+        @param[in] p_in The probability that an edge inside of the community exists.
+        @param[in] p_out The probability that two edges leaving the community close a triangle.*/
     static double64_t CheckForIncrement(int32_t r, int32_t d_in, int32_t d_out, uint32_t c_out, double64_t p_ext_node, double64_t p_in, double64_t p_ext) {
         double64_t t;
         if (r > 0) {
@@ -607,7 +604,7 @@ namespace scd {
     }
 
     
-    uint32_t ImproveCommunities(const CGraph* graph, CommunityPartition* partition, uint32_t numThreads) {
+    uint32_t ImproveCommunities(const CGraph* graph, CommunityPartition* partition, uint32_t numThreads, uint32_t lookahead ) {
         num_threads = numThreads;
         omp_set_num_threads(num_threads);
         printf("Maximum number of threads: %d\n", omp_get_max_threads());
@@ -615,12 +612,11 @@ namespace scd {
         CommunityPartition bestPartition;
         CopyPartition(&bestPartition, partition);
 
+        uint32_t remainingTries = lookahead;
         bool improve = true;
         while (improve) {
-            timeval time;
-            gettimeofday(&time, NULL);
             printf("\n");
-            uint64_t initTime = (time.tv_sec * 1000) + (time.tv_usec / 1000);
+            uint64_t initTime = StartClock();
             improve = false;
             printf("Starting improvement iteration ...\n");
             if (PerformImprovementStep(graph, partition)) {
@@ -629,27 +625,28 @@ namespace scd {
             }
 
             printf("New WCC: %f\n", partition->m_WCC / graph->GetNumNodes());
-            printf("Old WCC: %f\n", bestPartition.m_WCC / graph->GetNumNodes());
+            printf("Best WCC: %f\n", bestPartition.m_WCC / graph->GetNumNodes());
             printf("Memory required by this iteration: %lu bytes \n", MeasureMemoryConsumption(partition) + MeasureMemoryConsumption(&bestPartition));
 
             if (partition->m_WCC - bestPartition.m_WCC > 0.0f) {
                 if (((partition->m_WCC - bestPartition.m_WCC) / bestPartition.m_WCC) > 0.01f) {
-                    improve = true;
+                    remainingTries = lookahead;
                 }
                 FreeResources(&bestPartition);
                 CopyPartition(&bestPartition, partition);
-            } else {
-                FreeResources(partition);
-                CopyPartition(partition, &bestPartition);
+            } 
+
+            printf("Iteration time: %lu ms\n", StopClock(initTime));
+
+            if(remainingTries > 0) {
+                remainingTries--;
+                improve = true;
             }
-            gettimeofday(&time, NULL);
-            uint64_t endTime = (time.tv_sec * 1000) + (time.tv_usec / 1000);
-            printf("Iteration time: %lu ms\n", endTime - initTime);
         }
 
-
+        FreeResources(partition);
+        CopyPartition(partition, &bestPartition);
         FreeResources(&bestPartition);
-        //		printf("WCC: %f\n", partition->m_WCC / graph->GetNumNodes()) ;
         return 0;
     }
 }
