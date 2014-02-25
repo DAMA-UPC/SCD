@@ -240,22 +240,22 @@ namespace scd {
         if (r > 0) {
             t = (c_out - d_in) / (double64_t) r;
         } else {
-            t = 0.0d;
+            t = 0.0;
         }
-        double64_t A = 0.0d;
-        double64_t denom = 0.0d;
+        double64_t A = 0.0;
+        double64_t denom = 0.0;
         denom = (d_in * (d_in - 1) * p_in + d_out * (d_out + d_in - 1) * p_ext_node);
-        if (denom != 0.0d && ((r + d_out) > 0)) {
+        if (denom != 0.0 && ((r + d_out) > 0)) {
             A = ((d_in * (d_in - 1) * p_in) / denom) * (d_in + d_out) / (double64_t) (r + d_out);
         }
-        double64_t BMinus = 0.0d;
+        double64_t BMinus = 0.0;
         denom = (r - 1)*(r - 2) * p_in * p_in * p_in + (d_in - 1) * p_in + t * (r - 1) * p_in * p_ext + t * (t - 1) * p_ext + (d_out) * p_ext;
-        if (denom != 0.0d && ((r + t) > 0)) {
+        if (denom != 0.0 && ((r + t) > 0)) {
             BMinus = (((d_in - 1) * p_in) / denom) * ((r - 1) * p_in + 1 + t) / (r + t);
         }
-        double64_t CMinus = 0.0d;
+        double64_t CMinus = 0.0;
         denom = (r - 1)*(r - 2) * p_in * p_in * p_in + t * (t - 1) * p_ext + t * (r - 1)*(p_in) * p_ext;
-        if (denom != 0.0d && ((r + t) > 0) && ((r - 1 + t) > 0)) {
+        if (denom != 0.0 && ((r + t) > 0) && ((r - 1 + t) > 0)) {
             CMinus = -(((r - 1)*(r - 2) * p_in * p_in * p_in) / denom) * ((r - 1) * p_in + t) / ((r + t)*(r - 1 + t));
         }
         return (A + d_in * BMinus + (r - d_in) * CMinus);
@@ -314,7 +314,7 @@ namespace scd {
 
         
         uint32_t   bestInsertCommunity;
-        double64_t bestInsertImprovement      = -10000000000000.0d;
+        double64_t bestInsertImprovement      = -10000000000000.0;
         uint32_t   bestInsertInternalEdges    = 0;
         bool       insertCommunity            = false;
 
@@ -328,7 +328,7 @@ namespace scd {
                 if ((communitySize - 1) > 0 && (communitySize > 0)) {
                     p_in = (2 * partition->m_InternalEdges[community]) / ((double64_t) (communitySize) * (communitySize - 1));
                 } else {
-                    p_in = 0.0d;
+                    p_in = 0.0;
                 }
 
                 double64_t p_ext          = graph->GetCC();
