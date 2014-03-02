@@ -113,7 +113,7 @@ int main(int argc, char ** argv) {
     CGraph graph;
     uint64_t totalTime = 0,
              initTime = 0, 
-             spendTime = 0, 
+             spentTime = 0, 
              loadingTime = 0,
              algorithmTime = 0;
 
@@ -123,10 +123,10 @@ int main(int argc, char ** argv) {
     printf("Graph: %s\n", graphFileName);
     printf("OutputFile: %s\n", outputFileName);
     graph.Load(graphFileName, numThreads);
-    spendTime = StopClock(initTime);
-    loadingTime = spendTime;
-    totalTime += spendTime;
-    printf("Load time: %lu ms\n", spendTime);
+    spentTime = StopClock(initTime);
+    loadingTime = spentTime;
+    totalTime += spentTime;
+    printf("Load time: %lu ms\n", spentTime);
     //======================================================================
 
 
@@ -134,10 +134,10 @@ int main(int argc, char ** argv) {
     initTime = StartClock();
     printf("Removing edges without triangles ...\n");
     graph.RemoveEdgesNoTriangles(numThreads);
-    spendTime = StopClock(initTime);
-    algorithmTime += spendTime;
-    totalTime += spendTime;
-    printf("Removing edges without triangles time: %lu ms\n", spendTime);
+    spentTime = StopClock(initTime);
+    algorithmTime += spentTime;
+    totalTime += spentTime;
+    printf("Removing edges without triangles time: %lu ms\n", spentTime);
     //======================================================================
 
 
@@ -157,9 +157,9 @@ int main(int argc, char ** argv) {
             return 1;
         }
     }
-    spendTime  = StopClock(initTime);
-    totalTime += spendTime;
-    printf("Initial partition time: %lu ms\n", spendTime);
+    spentTime  = StopClock(initTime);
+    totalTime += spentTime;
+    printf("Initial partition time: %lu ms\n", spentTime);
     //======================================================================
 
 
@@ -169,19 +169,19 @@ int main(int argc, char ** argv) {
         printf("Error while improving communities\n");
         return 1;
     }
-    spendTime = StopClock(initTime);
-    algorithmTime += spendTime;
-    totalTime += spendTime;
-    printf("Improvement execution time: %lu ms\n", spendTime);
+    spentTime = StopClock(initTime);
+    algorithmTime += spentTime;
+    totalTime += spentTime;
+    printf("Improvement execution time: %lu ms\n", spentTime);
     //======================================================================
 
 
     //======================== PRINT RESULTS ===============================
     initTime = StartClock();
     PrintPartition(&graph, &partition, outputFileName);
-    spendTime = StopClock(initTime);
-    totalTime += spendTime;
-    printf("Print partition time: %lu ms\n", spendTime);
+    spentTime = StopClock(initTime);
+    totalTime += spentTime;
+    printf("Print partition time: %lu ms\n", spentTime);
     //======================================================================
 
 
