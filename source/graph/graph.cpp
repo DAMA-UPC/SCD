@@ -316,7 +316,7 @@ namespace scd {
                 
                 delete [] edgesTriangles;
 		m_CC /= m_NumNodes;
-                std::cout << "m_cc inicial: " << m_CC << std::endl;
+//                std::cout << "m_cc inicial: " << m_CC << std::endl;
 		m_NumEdges-=(numEdgesRemoved/2);
 		return 0;
 	}

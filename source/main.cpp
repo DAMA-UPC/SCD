@@ -61,13 +61,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 using namespace scd;
 
-void PrintUsage() {
+static void PrintUsage() {
     printf("Usage: scd <flags>\n");
     printf("Availaible flags:\n");
-    printf("\t-f [netork file name] : Specifies the network file.\n");
+    printf("\t-f [network file name] : Specifies the network file.\n");
     printf("\t-o [output file name] : Specifies the output file name.\n");
     printf("\t-n [number of threads]: Specifies the number of threads to run the algorithm.\n");
     printf("\t-l [lookahead size]: Sets the size of the lookahead iterations to look.\n");
+    printf("\t-p [lookahead size]: Specifies the partition file name to start the refinement from.\n");
 }
 
 
@@ -75,9 +76,11 @@ int main(int argc, char ** argv) {
 
     bool graphFileNameSet = false;
     bool outputFileNameSet = false;
+    bool partitionFileNameSet = false;
     bool numThreadsSet = false;
     char_t * graphFileName = NULL;
     char_t * outputFileName = NULL;
+    char_t * partitionFileName = NULL;
     uint32_t numThreads = omp_get_num_procs();
     uint32_t lookahead = 5;
     bool lookaheadSet = false;
@@ -85,6 +88,7 @@ int main(int argc, char ** argv) {
     for (uint32_t i = 1; i < argc; i++) {
         CHECK_ARGUMENT_STRING(i, "-f", graphFileName, graphFileNameSet)
         CHECK_ARGUMENT_STRING(i, "-o", outputFileName, outputFileNameSet)
+        CHECK_ARGUMENT_STRING(i, "-p", partitionFileName, partitionFileNameSet)
         CHECK_ARGUMENT_INT(i, "-n", numThreads, numThreadsSet)
         CHECK_ARGUMENT_INT(i, "-l", lookahead, lookaheadSet)
     }
@@ -137,13 +141,21 @@ int main(int argc, char ** argv) {
     //======================================================================
 
 
-    //=================== INITIALIZE PARTITIONS ============================
+    //=================== INITIALIZE PARTITION ============================
     initTime = StartClock();
     CommunityPartition partition;
-    printf("Computing initial partition ...\n");
-    if (InitializeSimplePartition(&graph, &partition)) {
-        printf("Error computing initial partition\n");
-        return 1;
+    if(partitionFileNameSet) {
+        printf("Loading partition file %s ... \n", partitionFileName);
+        if( LoadPartition(&graph,&partition,partitionFileName) ) {
+            printf("Error loading partition\n");
+            return 1;
+        }
+    } else {
+        printf("Initial partition file not set. Computing initial partition ...\n");
+        if (InitializeSimplePartition(&graph, &partition)) {
+            printf("Error computing initial partition\n");
+            return 1;
+        }
     }
     spendTime  = StopClock(initTime);
     totalTime += spendTime;

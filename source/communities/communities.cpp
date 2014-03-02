@@ -1,25 +1,28 @@
 /*SCD is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
-SCD is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+  SCD is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  */
 
 #include <algorithm>
 #include <assert.h>
 #include <cmath>
 #include <common/time.h>
 #include <communities/communities.h>
+#include <fstream>
 #include <graph/graph.h>
+#include <iostream>
 #include <map>
 #include <omp.h>
+#include <sstream>
 #include <string.h>
 #include <sys/time.h>
 #include <time.h>
@@ -28,7 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace scd {
 
-#define SCD_INVALID_COMMUNITY 0xfffffff
+#define SCD_INVALID_COMMUNITY 0xffffffff
 
     uint32_t num_threads = 1;
 
@@ -46,10 +49,10 @@ namespace scd {
         uint32_t m_Community;
     };
 
-    /**	@brief Compares two node clustering.
-     * 	@param e1 Void pointer to the first node clustering.	
-     * 	@param e2 Void pointer to the second node clustering.	
-     *	@return -1 if e1 goes before e2. 1 if e1 goes after e2. 0 if e1 and e2 are equal.*/
+    /** @brief Compares two node clustering.
+     *  @param e1 Void pointer to the first node clustering.    
+     *  @param e2 Void pointer to the second node clustering.   
+     *  @return -1 if e1 goes before e2. 1 if e1 goes after e2. 0 if e1 and e2 are equal.*/
     static int Compare_NodeClusterings(const void* e1, const void* e2) {
         NodeClustering* nC1 = (NodeClustering*) e1;
         NodeClustering* nC2 = (NodeClustering*) e2;
@@ -60,10 +63,10 @@ namespace scd {
         return 0;
     }
 
-    /**	@brief Compares two unsigned integers.
-     * 	@param e1 Void pointer to the first unsigned integer.	
-     * 	@param e2 Void pointer to the second unsigned integer.	
-     *	@return -1 if e1 goes before e2. 1 if e1 goes after e2. 0 if e1 and e2 are equal.*/
+    /** @brief Compares two unsigned integers.
+     *  @param e1 Void pointer to the first unsigned integer.   
+     *  @param e2 Void pointer to the second unsigned integer.  
+     *  @return -1 if e1 goes before e2. 1 if e1 goes after e2. 0 if e1 and e2 are equal.*/
     static int Compare_Ids(const void* e1, const void* e2) {
         uint32_t id1 = *(uint32_t*) e1;
         uint32_t id2 = *(uint32_t*) e2;
@@ -153,7 +156,7 @@ namespace scd {
             return 1;
         }
 
-        #pragma omp parallel for schedule(SCD_SCHEDULING, SCD_THREAD_BLOCK_SIZE)
+#pragma omp parallel for schedule(SCD_SCHEDULING, SCD_THREAD_BLOCK_SIZE)
         for (uint32_t i = 0; i < partition->m_NumCommunities; i++) {
             counters[i] = 0;
         }
@@ -228,13 +231,13 @@ namespace scd {
     }
 
     /** @brief Computes the increment on WCC for inserting a node into a community.
-        @param[in] r The size of the community.
-        @param[in] d_in The number of edges between the inserted vertex and the community.
-        @param[in] d_out The number of edges between the inserted vertex and the rest of the graph.
-        @param[in] c_out The number of edges leaving the community (note that this MUST include d_in).
-        @param[in] p_ext_node The probability that two edges of the vertex pointing to the rest of the graph close a triangle.
-        @param[in] p_in The probability that an edge inside of the community exists.
-        @param[in] p_out The probability that two edges leaving the community close a triangle.*/
+      @param[in] r The size of the community.
+      @param[in] d_in The number of edges between the inserted vertex and the community.
+      @param[in] d_out The number of edges between the inserted vertex and the rest of the graph.
+      @param[in] c_out The number of edges leaving the community (note that this MUST include d_in).
+      @param[in] p_ext_node The probability that two edges of the vertex pointing to the rest of the graph close a triangle.
+      @param[in] p_in The probability that an edge inside of the community exists.
+      @param[in] p_out The probability that two edges leaving the community close a triangle.*/
     static double64_t CheckForIncrement(int32_t r, int32_t d_in, int32_t d_out, uint32_t c_out, double64_t p_ext_node, double64_t p_in, double64_t p_ext) {
         double64_t t;
         if (r > 0) {
@@ -262,10 +265,10 @@ namespace scd {
     }
 
     /** @brief Checks the best movement of a vertex.
-            @param[in] graph The graph.
-            @param[in] node The node to check the movement.
-            @param[in] partition The current partition into communities.
-            @return The movement to perform.*/
+      @param[in] graph The graph.
+      @param[in] node The node to check the movement.
+      @param[in] partition The current partition into communities.
+      @return The movement to perform.*/
     static Movement CheckForBestMovement(const CGraph* graph, uint32_t node, const CommunityPartition* partition) {
 
         Movement movement;
@@ -312,7 +315,7 @@ namespace scd {
             removeCommunity = true;
         }
 
-        
+
         uint32_t   bestInsertCommunity;
         double64_t bestInsertImprovement      = -10000000000000.0;
         uint32_t   bestInsertInternalEdges    = 0;
@@ -353,16 +356,16 @@ namespace scd {
         return movement;
     }
 
-    
+
     /** @brief Performs an improvement step, that is, checks for movements for all the nodes and
-                            and computes the new partitions.
-            @param[in] graph The graph.
-            @param[out] partition The current partition. It will be modified with the new partition.*/
+      and computes the new partitions.
+      @param[in] graph The graph.
+      @param[out] partition The current partition. It will be modified with the new partition.*/
     static uint32_t PerformImprovementStep(const CGraph* graph, CommunityPartition* partition) {
         std::vector<Movement>* movements = new std::vector<Movement>[num_threads];
         uint32_t N = graph->GetNumNodes();
 
-        #pragma omp parallel for schedule(SCD_SCHEDULING,SCD_THREAD_BLOCK_SIZE) 
+#pragma omp parallel for schedule(SCD_SCHEDULING,SCD_THREAD_BLOCK_SIZE) 
         for (uint32_t i = 0; i < N; i++) {
             int thread = omp_get_thread_num();
             if (i % 100000 == 0) {
@@ -384,14 +387,14 @@ namespace scd {
         uint32_t removeMovements = 0;
         uint32_t removeAndInsertMovements = 0;
         uint32_t insertMovements = 0;
-        
 
-        #pragma omp parallel for schedule(static,1)   
+
+#pragma omp parallel for schedule(static,1)   
         for (uint32_t thread = 0; thread < num_threads; thread++) {
             uint32_t numMovements = movements[thread].size();
             totalMovements += numMovements;
             uint32_t nextLabelThread = partition->m_NumCommunities + numMovements * thread;            
-                  
+
             for (uint32_t i = 0; i < numMovements; i++) {
                 Movement movement = (movements[thread])[i];
                 switch (movement.m_MovementType) {
@@ -427,8 +430,8 @@ namespace scd {
     }
 
     /** @brief Measures the memory consumption of a partition.
-            @param partition The partition to measure.
-            @return The size in bytes of the structure.*/
+      @param partition The partition to measure.
+      @return The size in bytes of the structure.*/
     static uint64_t MeasureMemoryConsumption(const CommunityPartition* partition) {
         uint64_t memoryConsumption = 0;
         memoryConsumption += sizeof (uint32_t)  * partition->m_NumNodes; //Labels array consumption.
@@ -441,6 +444,48 @@ namespace scd {
         memoryConsumption += sizeof (uint32_t); //NumCommunities consumption.
         memoryConsumption += sizeof (double64_t); //WCC consumption.
         return memoryConsumption;
+    }
+
+    uint32_t    LoadPartition( const CGraph* graph, CommunityPartition* partition, const char_t* partitionFileName ) {
+
+        std::map<uint32_t, uint32_t> oldToNew;
+        const uint32_t* newToOld = graph->GetMap();
+        for( uint32_t i = 0; i < graph->GetNumNodes(); ++i ) {
+            oldToNew.insert(std::pair<uint32_t, uint32_t>(newToOld[i],i));
+        }
+
+        uint32_t* communities = new uint32_t[graph->GetNumNodes()];
+        memset(communities,0xff,sizeof(uint32_t)*graph->GetNumNodes());
+        if (!communities) {
+            printf("Unable to allocate partition\n");
+            return 1;
+        }
+
+        std::ifstream partitionFile;
+        partitionFile.open(partitionFileName);
+        if(!partitionFile.is_open()) {
+            printf("Unable to load partition file.\n");
+            return 1;
+        }
+        std::string line;
+        uint32_t nextLabel = 0;
+        while(std::getline(partitionFile,line)) {
+            std::istringstream stream(line);
+            uint32_t node;
+            while( stream >> node ) {
+                communities[oldToNew[node]] = nextLabel;
+            }
+            ++nextLabel;
+        }
+        for( uint32_t i=0; i<graph->GetNumNodes(); ++i) {
+            if( communities[i] == 0xffffffff ) {
+                communities[i] = nextLabel++;
+            }
+        }
+        partitionFile.close();
+        InitializeFromLabelsArray(graph,partition,communities);
+        delete [] communities;
+        return 0;
     }
 
     uint32_t InitializeSimplePartition(const CGraph* graph, CommunityPartition* partition) {
@@ -462,25 +507,25 @@ namespace scd {
             printf("Error allocating visited array.");
             return 1;
         }
-        
+
         memset(visited, false, graph->GetNumNodes() );
-       
+
         uint32_t* communities = new uint32_t[graph->GetNumNodes()];
         if (!communities) {
             printf("Error allocating communities array.\n");
             return 1;
         }
-        
+
         uint32_t nextLabel = 0;
         for (uint32_t i = 0; i < graph->GetNumNodes(); i++) {
             NodeClustering* nodeClustering = &nC[i];
-            //			printf("%f\n", nodeClustering->m_CC);
+            //          printf("%f\n", nodeClustering->m_CC);
             if (!visited[nodeClustering->m_NodeId]) {
                 visited[nodeClustering->m_NodeId] = true;
                 communities[nodeClustering->m_NodeId] = nextLabel;
                 const uint32_t* adjacencies1 = graph->GetNeighbors(nodeClustering->m_NodeId);
                 uint32_t degree = graph->GetDegree(nodeClustering->m_NodeId);
-                
+
                 for (uint32_t j = 0; j < degree; j++) {
                     if (!visited[adjacencies1[j]]) {                        
                         visited[adjacencies1[j]] = true;
@@ -547,7 +592,7 @@ namespace scd {
         return 0;
     }
 
-    
+
     uint32_t PrintPartition(const CGraph* graph, const CommunityPartition* partition, const char_t* fileName) {
 
         std::ofstream outFile;
@@ -567,7 +612,7 @@ namespace scd {
         return 0;
     }
 
-    
+
     void FreeResources(CommunityPartition* partition) {
         if (partition->m_NodeLabels != NULL) {
             delete [] partition->m_NodeLabels;
@@ -603,7 +648,7 @@ namespace scd {
         partition->m_WCC = 0.0;
     }
 
-    
+
     uint32_t ImproveCommunities(const CGraph* graph, CommunityPartition* partition, uint32_t numThreads, uint32_t lookahead ) {
         num_threads = numThreads;
         omp_set_num_threads(num_threads);

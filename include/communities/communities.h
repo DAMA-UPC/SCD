@@ -42,6 +42,16 @@ namespace scd {
 		double64_t	m_WCC;				/**< @brief The WCC of this partition.*/
 	};
 
+
+
+			/**	@brief Initializes a partition structure with an initial partition. 
+			 * 	@param[in] graph A pointer to the graph.	
+			 * 	@param[out] partition The partition structure to initializes. 
+			 * 	@param[in] partitionFileName The name of the partition file to load.	
+			 *	@return 0 if the computation was successful. 1 if there were errors.*/
+	uint32_t 	LoadPartition( const CGraph* graph, CommunityPartition* partition, const char_t* partitionFileName );
+
+
 			/**	@brief Initializes a partition structure with an initial partition. 
 			 * 	@param[in] graph A pointer to the graph.	
 			 * 	@param[out] partition The partition structure to initializes. 

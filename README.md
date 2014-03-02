@@ -61,9 +61,11 @@ a community per line, represented as a list of identifiers. network.dat contains
 
 Now, we summarize the options of the program:
 
-  *  -f [netork file name] : Specifies the network file.
-  *  -o [output file name] : Specifies the output file name.
-  *  -n [number of threads]: Specifies the number of threads to run the algorithm.
+  *  -f [netork file name] :    Specifies the network file.
+  *  -o [output file name] :    Specifies the output file name (DEFAULT="communities.dat").
+  *  -n [number of threads]:    Specifies the number of threads to run the algorithm (DEFAULT=maximum available cores).
+  *  -l [lookahead]:            Specifies the number of lookahead iterations to look before terminating the optimization process (DEFAULT=5).
+  *  -p [partition file name]:  Specifies the initial partition to refine from (Optional).
   
 
 Tools

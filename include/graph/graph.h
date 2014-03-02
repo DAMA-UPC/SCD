@@ -38,7 +38,7 @@ public:
 	*	The identifiers of the nodes have to bee between
 	*	0 and N-1. The edges must be sorted by the first identifier first,
 	*	and then the second.
-	*	@param fileName The name of the file.
+	*	@param[in] fileName The name of the file.
 	*	@return 0 if the load was successful. 1 if there were errors.*/
 	uint32_t 		Load(const char_t * fileName, uint32_t numThreads);
 
@@ -49,13 +49,13 @@ public:
 	}
 
 	/**	@brief Gets the number of edges in the graph.
-	*	@brief The number of edges.*/
+	*	@return The number of edges.*/
 	inline uint32_t 	GetNumEdges() const {
 			return m_NumEdges;
 	}
 
 	/**	@brief Gets the degree of a node.
-	*	@param nodeId The identifier of the node.
+	*	@param[in] nodeId The identifier of the node.
 	*	@return	The degree of the node.*/
 	inline uint32_t 	GetDegree(uint32_t nodeId) const {
 		assert(nodeId<m_NumNodes);
@@ -63,7 +63,7 @@ public:
 	}
 
 	/**	@brief Gets the neighbors of a node.
-	*	@param nodeId The identifier of the node.
+	*	@param[in] nodeId The identifier of the node.
 	*	@return	The neighbors of the node.*/
 	inline const uint32_t*  GetNeighbors(uint32_t nodeId) const {
 		assert(nodeId<m_NumNodes);
@@ -71,7 +71,7 @@ public:
 	}
 
 	/** @brief Gets the identifier corresponding to the given node.
-	*	@param nodeId The identifier of the node.
+	*	@param[in] nodeId The identifier of the node.
 	*	@return The original identifier.*/
 	inline uint32_t 	ReMap(uint32_t nodeId) const {
 		assert(nodeId<m_NumNodes);
@@ -79,7 +79,7 @@ public:
 	}
 
 	/**	@brief Gets the total triangles of a node.
-	*	@param nodeId The identifier of the node.
+	*	@param[in] nodeId The identifier of the node.
 	*	@return	The total triangles of the node.*/
 	inline uint32_t		GetTotalTriangles( uint32_t nodeId ) const {
 		assert(nodeId<m_NumNodes);
@@ -98,6 +98,12 @@ public:
 		@param numThreads The number of threads to use.
 		@return True if the removing was successful, false otherwise.*/
 	uint32_t		RemoveEdgesNoTriangles(uint32_t numThreads);
+
+	/** @brief Returns the map between internal identifiers to external ones. Used by some tools.
+	 *  @return The map vector.*/
+	inline const uint32_t* GetMap() const {
+		return m_Map;
+	}
 
 private:
 	uint32_t 		m_NumNodes; 		/**< @brief The number of nodes in the graph.*/
