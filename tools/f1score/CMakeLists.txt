@@ -11,20 +11,8 @@
 #You should have received a copy of the GNU General Public License
 #along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8.2)
-PROJECT(SCD CXX)
-SET(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -pg -fopenmp -DPROFILE ")	
-SET(CMAKE_CXX_FLAGS_RELEASE "-O3 -fopenmp -DNDEBUG")	
-#SET(CMAKE_VERBOSE_MAKEFILE ON)
+SET(CMAKE_CXX_FLAGS_DEBUG "-O0 -std=c++11 -g3 -fno-rtti")	
+SET(CMAKE_CXX_FLAGS_RELEASE "-O2 -std=c++11")	
 
-if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-  message(STATUS "Setting build type to 'Release' as none was specified.")
-  set(CMAKE_BUILD_TYPE Release)
-endif()
-
-ADD_SUBDIRECTORY(./tools/wcc)
-ADD_SUBDIRECTORY(./tools/f1score)
-
-INCLUDE_DIRECTORIES(./include)
-FILE( GLOB_RECURSE SOURCE_FILES "source/*" )
-ADD_EXECUTABLE(scd ${SOURCE_FILES})	
+AUX_SOURCE_DIRECTORY(./source SOURCE_FILES)
+ADD_EXECUTABLE(f1score ${SOURCE_FILES})	

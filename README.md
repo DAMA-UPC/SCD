@@ -74,6 +74,8 @@ Tools
 Into the build folder, a folder named tools is automatically created and contains useful tools. The list of tools currently available are the following:
   * wcc: Computes, given a graph and a partition, the WCC of the partition.
       * Usage: wcc -f [graph file name] -p [partition file name]
+  * f1score: Computes the f1score between two partitions.
+      * Usage: f1score [partition file name 1] [partition file name 2]
  
 
 
