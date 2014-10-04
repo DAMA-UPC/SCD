@@ -100,8 +100,9 @@ namespace scd {
     /** @brief Initializes a partition structure from a labels to communities array.
      *  @param[in] graph The graph where the partition belongs.
      *  @param[out] partition The partition structure where the partition will be stored.
-     *  @param[in] communities The array of nodes to community labels from which the partition is initialized.*/
-    static uint32_t InitializeFromLabelsArray(const CGraph* graph, CommunityPartition* partition, const uint32_t* communities) {
+     *  @param[in] communities The array of nodes to community labels from which the partition is initialized.
+     *  @param[in] alfa The alfa parameter controlling the cohesivness of the communities.*/
+    static uint32_t InitializeFromLabelsArray(const CGraph* graph, CommunityPartition* partition, const uint32_t* communities, const double64_t alfa) {
 
         //Initializing default values
         partition->m_NodeLabels = NULL;
@@ -226,7 +227,7 @@ namespace scd {
             }
         }
 
-        partition->m_WCC = ComputeWCC(graph, partition->m_NodeLabels, partition->m_NumCommunities, partition->m_CommunityIndices, partition->m_Communities, partition->m_NodeWCC);
+        partition->m_WCC = ComputeWCC(graph, alfa, partition->m_NodeLabels, partition->m_NumCommunities, partition->m_CommunityIndices, partition->m_Communities, partition->m_NodeWCC);
         return 0;
     }
 
@@ -235,11 +236,11 @@ namespace scd {
       @param[in] d_in The number of edges between the inserted vertex and the community.
       @param[in] d_out The number of edges between the inserted vertex and the rest of the graph.
       @param[in] c_out The number of edges leaving the community (note that this MUST include d_in).
-      @param[in] p_ext_node The probability that two edges of the vertex pointing to the rest of the graph close a triangle.
       @param[in] p_in The probability that an edge inside of the community exists.
-      @param[in] p_out The probability that two edges leaving the community close a triangle.*/
-    static double64_t CheckForIncrement(int32_t r, int32_t d_in, int32_t d_out, uint32_t c_out, double64_t p_ext_node, double64_t p_in, double64_t p_ext) {
-        double64_t t;
+      @param[in] p_ext The probability that two edges leaving the community close a triangle.
+      @param[in] alfa The alfa parameter controlling the cohesivness of the communities.*/
+    static double64_t CheckForIncrement(int32_t r, int32_t d_in, int32_t d_out, uint32_t c_out, double64_t p_in, double64_t p_ext, const double64_t alfa) {
+       /* double64_t t;
         if (r > 0) {
             t = (c_out - d_in) / (double64_t) r;
         } else {
@@ -247,7 +248,7 @@ namespace scd {
         }
         double64_t A = 0.0;
         double64_t denom = 0.0;
-        denom = (d_in * (d_in - 1) * p_in + d_out * (d_out + d_in - 1) * p_ext_node);
+        denom = (d_in * (d_in - 1) * p_in + d_out * (d_out + d_in - 1) * p_ext);
         if (denom != 0.0 && ((r + d_out) > 0)) {
             A = ((d_in * (d_in - 1) * p_in) / denom) * (d_in + d_out) / (double64_t) (r + d_out);
         }
@@ -262,6 +263,48 @@ namespace scd {
             CMinus = -(((r - 1)*(r - 2) * p_in * p_in * p_in) / denom) * ((r - 1) * p_in + t) / ((r + t)*(r - 1 + t));
         }
         return (A + d_in * BMinus + (r - d_in) * CMinus);
+        */
+
+        double64_t t;
+        if (r > 0) {
+            t = (c_out - d_in) / (double64_t) r;
+        } else {
+            t = 0.0;
+        }
+        // Node v 
+        double64_t A = 0.0;
+        double64_t denom = 0.0;
+        denom = (d_in * (d_in - 1) * p_in + 
+                d_out * (d_out - 1) * p_ext) +
+                d_out * d_in * p_ext;
+        denom *= d_in + d_out + alfa*(r-1-d_in);
+        if (denom != 0.0) {
+            A = ((d_in * (d_in - 1) * p_in) * (d_in + d_out)) / (denom);
+        }
+
+        // Nodes connected with v 
+        double64_t BMinus = 0.0;
+        denom = (r - 1)*(r - 2) * p_in * p_in * p_in + 
+                2*(d_in - 1) * p_in + 
+                t * (r - 1) * p_in * p_ext + 
+                t * (t - 1) * p_ext + 
+                (d_out) * p_ext;
+        denom *= (r-1)*p_in + 1 + t + alfa*(r - (r-1)*p_in - 1);
+        if (denom != 0.0) {
+            BMinus = (2*(d_in - 1) * p_in) * ((r - 1) * p_in + 1 + t) / denom;
+        }
+        // Nodes not connected with v 
+        double64_t CMinus = 0.0;
+        denom = (r - 1)*(r - 2) * p_in * p_in * p_in +
+                t * (t - 1) * p_ext + 
+                t * (r - 1)*(p_in) * p_ext;
+        denom *= (r-1)*p_in + t + alfa*(r - (r-1)*p_in);
+        denom *= (r-1)*p_in + t + alfa*(r - (r-1)*p_in - 1);
+        if (denom != 0.0 && ((r + t) > 0) && ((r - 1 + t) > 0)) {
+            CMinus = -((r - 1)*(r - 2) * p_in * p_in * p_in) * ((r - 1) * p_in + t)*alfa / denom;
+        }
+        // Total 
+        return (A + d_in * BMinus + (r - d_in) * CMinus);
     }
 
     /** @brief Checks the best movement of a vertex.
@@ -269,7 +312,7 @@ namespace scd {
       @param[in] node The node to check the movement.
       @param[in] partition The current partition into communities.
       @return The movement to perform.*/
-    static Movement CheckForBestMovement(const CGraph* graph, uint32_t node, const CommunityPartition* partition) {
+    static Movement CheckForBestMovement(const CGraph* graph, uint32_t node, const CommunityPartition* partition, const double64_t alfa) {
 
         Movement movement;
         movement.m_MovementType = E_NO_MOVEMENT;
@@ -304,12 +347,11 @@ namespace scd {
             p_in = 0.0f;
         }
         double64_t p_ext = graph->GetCC();
-        double64_t p_ext_node = p_ext;
         double64_t bestRemoveImprovement;
         bestRemoveImprovement = -CheckForIncrement(communitySize - 1, auxInternalEdges,
                 graph->GetDegree(node) - auxInternalEdges,
-                partition->m_ExternalEdges[community] + auxInternalEdges - (graph->GetDegree(node) - auxInternalEdges),
-                p_ext_node, p_in, p_ext);
+                partition->m_ExternalEdges[community] + auxInternalEdges - (graph->GetDegree(node) - auxInternalEdges ),
+                p_in, p_ext, alfa);
         bestRemoveInternalEdges = auxInternalEdges;
         if (bestRemoveImprovement > 0.0f) {
             removeCommunity = true;
@@ -335,9 +377,8 @@ namespace scd {
                 }
 
                 double64_t p_ext          = graph->GetCC();
-                double64_t p_ext_node     = p_ext;
                 double64_t auxImprovement = CheckForIncrement(communitySize, auxInternalEdges, graph->GetDegree(node) - auxInternalEdges,
-                        partition->m_ExternalEdges[community], p_ext_node, p_in, p_ext);
+                        partition->m_ExternalEdges[community], p_in, p_ext, alfa);
                 if (auxImprovement + bestRemoveImprovement > bestInsertImprovement) {
                     insertCommunity = true;
                     bestInsertImprovement = auxImprovement + bestRemoveImprovement;
@@ -360,8 +401,9 @@ namespace scd {
     /** @brief Performs an improvement step, that is, checks for movements for all the nodes and
       and computes the new partitions.
       @param[in] graph The graph.
-      @param[out] partition The current partition. It will be modified with the new partition.*/
-    static uint32_t PerformImprovementStep(const CGraph* graph, CommunityPartition* partition) {
+      @param[out] partition The current partition. It will be modified with the new partition.
+      @param[in] alfa The alfa parameter controlling the cohesivness of the communities.*/
+    static uint32_t PerformImprovementStep(const CGraph* graph, CommunityPartition* partition, const double64_t alfa) {
         std::vector<Movement>* movements = new std::vector<Movement>[num_threads];
         uint32_t N = graph->GetNumNodes();
 
@@ -372,7 +414,7 @@ namespace scd {
                 printf("Thread %d: Checked movements of %d nodes.\n", thread, i);
             }
             Movement movement;
-            movement = CheckForBestMovement(graph, i, partition);
+            movement = CheckForBestMovement(graph, i, partition, alfa);
             if (movement.m_MovementType != E_NO_MOVEMENT) {
                 movements[thread].push_back(movement);
             }
@@ -420,7 +462,7 @@ namespace scd {
         printf(" Number of insert performed: %d\n", insertMovements);
         FreeResources(partition);
 
-        if (InitializeFromLabelsArray(graph, partition, tempNodeLabels)) {
+        if (InitializeFromLabelsArray(graph, partition, tempNodeLabels, alfa)) {
             printf("Error initializing from label array.\n");
             return 1;
         }
@@ -446,7 +488,7 @@ namespace scd {
         return memoryConsumption;
     }
 
-    uint32_t    LoadPartition( const CGraph* graph, CommunityPartition* partition, const char_t* partitionFileName ) {
+    uint32_t    LoadPartition( const CGraph* graph, CommunityPartition* partition, const char_t* partitionFileName, const double64_t alfa ) {
 
         std::map<uint32_t, uint32_t> oldToNew;
         const uint32_t* newToOld = graph->GetMap();
@@ -483,12 +525,12 @@ namespace scd {
             }
         }
         partitionFile.close();
-        InitializeFromLabelsArray(graph,partition,communities);
+        InitializeFromLabelsArray(graph,partition,communities, alfa);
         delete [] communities;
         return 0;
     }
 
-    uint32_t InitializeSimplePartition(const CGraph* graph, CommunityPartition* partition) {
+    uint32_t InitializeSimplePartition(const CGraph* graph, CommunityPartition* partition, const double64_t alfa) {
         //Computing the clustering coefficient of each node of the graph.
         NodeClustering* nC = new NodeClustering[graph->GetNumNodes()];
         if (!nC) {
@@ -538,7 +580,7 @@ namespace scd {
         delete [] visited;
         delete [] nC;
 
-        InitializeFromLabelsArray(graph, partition, communities);
+        InitializeFromLabelsArray(graph, partition, communities, alfa);
         delete [] communities;
         return 0;
     }
@@ -649,7 +691,7 @@ namespace scd {
     }
 
 
-    uint32_t ImproveCommunities(const CGraph* graph, CommunityPartition* partition, uint32_t numThreads, uint32_t lookahead ) {
+    uint32_t ImproveCommunities(const CGraph* graph, CommunityPartition* partition, uint32_t numThreads, uint32_t lookahead, const double64_t alfa ) {
         num_threads = numThreads;
         omp_set_num_threads(num_threads);
         printf("Maximum number of threads: %d\n", omp_get_max_threads());
@@ -664,7 +706,7 @@ namespace scd {
             uint64_t initTime = StartClock();
             improve = false;
             printf("Starting improvement iteration ...\n");
-            if (PerformImprovementStep(graph, partition)) {
+            if (PerformImprovementStep(graph, partition, alfa)) {
                 printf("Error while performing an improvement step.\n");
                 return 1;
             }

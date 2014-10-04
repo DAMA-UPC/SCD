@@ -68,7 +68,8 @@ static void PrintUsage() {
     printf("\t-o [output file name] : Specifies the output file name.\n");
     printf("\t-n [number of threads]: Specifies the number of threads to run the algorithm.\n");
     printf("\t-l [lookahead size]: Sets the size of the lookahead iterations to look.\n");
-    printf("\t-p [lookahead size]: Specifies the partition file name to start the refinement from.\n");
+    printf("\t-p [partition file name]: Specifies the partition file name to start the refinement from.\n");
+    printf("\t-a [lookahead size]: Specifies the alfa parameter to control the level of cohesion of the communities. Default: 1.0.\n");
 }
 
 
@@ -78,12 +79,14 @@ int main(int argc, char ** argv) {
     bool outputFileNameSet = false;
     bool partitionFileNameSet = false;
     bool numThreadsSet = false;
+    bool alfaSet = false;
     char_t * graphFileName = NULL;
     char_t * outputFileName = NULL;
     char_t * partitionFileName = NULL;
     uint32_t numThreads = omp_get_num_procs();
     uint32_t lookahead = 5;
     bool lookaheadSet = false;
+    double64_t alfa = 1.0;
 
     for (uint32_t i = 1; i < argc; i++) {
         CHECK_ARGUMENT_STRING(i, "-f", graphFileName, graphFileNameSet)
@@ -91,6 +94,7 @@ int main(int argc, char ** argv) {
         CHECK_ARGUMENT_STRING(i, "-p", partitionFileName, partitionFileNameSet)
         CHECK_ARGUMENT_INT(i, "-n", numThreads, numThreadsSet)
         CHECK_ARGUMENT_INT(i, "-l", lookahead, lookaheadSet)
+        CHECK_ARGUMENT_FLOAT(i, "-a", alfa, alfaSet)
     }
 
     if (!graphFileNameSet) {
@@ -146,13 +150,13 @@ int main(int argc, char ** argv) {
     CommunityPartition partition;
     if(partitionFileNameSet) {
         printf("Loading partition file %s ... \n", partitionFileName);
-        if( LoadPartition(&graph,&partition,partitionFileName) ) {
+        if( LoadPartition(&graph,&partition,partitionFileName, alfa) ) {
             printf("Error loading partition\n");
             return 1;
         }
     } else {
         printf("Initial partition file not set. Computing initial partition ...\n");
-        if (InitializeSimplePartition(&graph, &partition)) {
+        if (InitializeSimplePartition(&graph, &partition, alfa)) {
             printf("Error computing initial partition\n");
             return 1;
         }
@@ -165,7 +169,7 @@ int main(int argc, char ** argv) {
 
     //================ TRANSFER NODES AMONG PARTITIONS =====================
     initTime = StartClock();
-    if (ImproveCommunities(&graph, &partition, numThreads, lookahead)) {
+    if (ImproveCommunities(&graph, &partition, numThreads, lookahead, alfa)) {
         printf("Error while improving communities\n");
         return 1;
     }

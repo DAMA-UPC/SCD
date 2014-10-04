@@ -42,11 +42,7 @@ namespace scd {
         return triangles;
     }
     
-    
-    
-
-    
-    double64_t ComputeWCC(const CGraph * graph, const uint32_t * communities, 
+    double64_t ComputeWCC(const CGraph * graph, const double64_t alfa, const uint32_t * communities, 
             const uint32_t numCommunities, const uint32_t* labelsIndices, 
             const uint32_t * communitiesInvIndex, double64_t* wccs) {    
         double64_t globalWCC = 0;
@@ -54,14 +50,14 @@ namespace scd {
         #pragma omp parallel for schedule(static, 8) reduction(+:globalWCC)
         for (uint32_t i = 0; i < graph->GetNumNodes(); i++) {
             uint32_t communitySize = communitiesInvIndex[labelsIndices[communities[i]]];
-            wccs[i] = ComputeWCC(graph, i, communities[i], communities, communitySize);
+            wccs[i] = ComputeWCC(graph, alfa, i, communities[i], communities, communitySize);
             globalWCC += wccs[i];
         }
         return globalWCC;
     }
 
     
-    double64_t ComputeWCC(const CGraph * graph, uint32_t node, uint32_t communityLabel, 
+    double64_t ComputeWCC(const CGraph * graph, const double64_t alfa, uint32_t node, uint32_t communityLabel, 
             const uint32_t * communities, uint32_t communitySize) {
         
         uint32_t        internalTriangles      = 0;
@@ -120,7 +116,7 @@ namespace scd {
         }
         
         return ((internalTriangles / (double64_t) graph->GetTotalTriangles(node)) *
-               (triangleDegree / (double64_t) (triangleDegree - internalTriangleDegree + communitySize - 1)));
+               (triangleDegree / (double64_t) (triangleDegree + alfa*(communitySize - 1 - internalTriangleDegree))));
     }
 }
 
