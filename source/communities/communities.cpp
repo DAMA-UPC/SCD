@@ -471,6 +471,132 @@ namespace scd {
         return 0;
     }
 
+
+    /*********************** EXPERIMENTAL **************************************/
+
+    struct CommunityInteraction {
+        uint32_t m_CommunityId1;
+        uint32_t m_CommunityId2;
+        double64_t m_Improvement;
+    };
+
+    static bool CompareByImprovement( const CommunityInteraction& a, const CommunityInteraction& b ) {
+        if( a.m_Improvement > b.m_Improvement ) return true;
+        return false;
+    }
+
+    static bool CompareById( const CommunityInteraction& a, const CommunityInteraction& b ) {
+        if( a.m_CommunityId1 < b.m_CommunityId1 ) return true;
+        if( a.m_CommunityId1 > b.m_CommunityId1 ) return false;
+        if( a.m_CommunityId2 < b.m_CommunityId2 ) return true;
+        if( a.m_CommunityId2 > b.m_CommunityId2 ) return false;
+        return false;
+    }
+
+    static void PrintCommunity(const CommunityPartition* partition, uint32_t communityId) {
+        const uint32_t* nodes = &partition->m_Communities[partition->m_CommunityIndices[communityId]+1];
+        uint32_t size = partition->m_Communities[partition->m_CommunityIndices[communityId]];
+        for( uint32_t i = 0; i < size; ++i ) {
+            printf("%d ", nodes[i]);
+        }
+        printf("\n");
+    }
+
+    double64_t TestMerge(const CGraph* graph, const CommunityPartition* partition, const double64_t alfa, const CommunityInteraction& interaction) {
+//        printf("Testing merge %d - %d\n", interaction.m_CommunityId1, interaction.m_CommunityId2);
+//        PrintCommunity(partition, interaction.m_CommunityId1);
+//        PrintCommunity(partition, interaction.m_CommunityId2);
+
+        std::set<uint32_t> community;
+        const uint32_t* nodes = &partition->m_Communities[partition->m_CommunityIndices[interaction.m_CommunityId1]+1];
+        uint32_t size = partition->m_Communities[partition->m_CommunityIndices[interaction.m_CommunityId1]];
+        double64_t before = 0.0;
+        for( uint32_t i = 0; i < size; ++i ) {
+            community.insert(nodes[i]);
+            before += partition->m_NodeWCC[nodes[i]];
+        }
+
+        nodes = &partition->m_Communities[partition->m_CommunityIndices[interaction.m_CommunityId2]+1];
+        size = partition->m_Communities[partition->m_CommunityIndices[interaction.m_CommunityId2]];
+        for( uint32_t i = 0; i < size; ++i ) {
+            community.insert(nodes[i]);
+            before += partition->m_NodeWCC[nodes[i]];
+        }
+ /*       for( std::set<uint32_t>::iterator it = community.begin(); it != community.end(); ++it){
+            printf("%d ",*it);
+        }
+        printf("\n");*/
+        double64_t after = ComputeWCC(graph,alfa,community);
+//        printf("after: %f, before: %f\n", after, before);
+        return (after - before);
+    }
+
+    typedef std::set<CommunityInteraction, bool (*)(const CommunityInteraction&, const CommunityInteraction&)> InteractionsSet;
+    static uint32_t MergeCommunities(const CGraph* graph, CommunityPartition* partition, const double64_t alfa) {
+        // Look for community interactions.
+        InteractionsSet candidateMerges(CompareById);
+        uint32_t N = graph->GetNumNodes();
+        for( uint32_t i = 0; i < N; ++i ) {
+            uint32_t communityLabel1 = partition->m_NodeLabels[i];
+            uint32_t degree = graph->GetDegree(i);
+            const uint32_t* adjacencies = graph->GetNeighbors(i);
+            for( uint32_t j = 0; j < degree; ++j ) {
+                uint32_t communityLabel2 = partition->m_NodeLabels[adjacencies[j]];
+                if( communityLabel1 != communityLabel2 ) {
+                    CommunityInteraction cI;
+                    if( communityLabel1 < communityLabel2 ) {
+                        cI.m_CommunityId1 = communityLabel1;
+                        cI.m_CommunityId2 = communityLabel2;
+                    } else {
+                        cI.m_CommunityId2 = communityLabel1;
+                        cI.m_CommunityId1 = communityLabel2;
+                    }
+                    candidateMerges.insert(cI);
+                }
+            }
+        }
+        std::vector<CommunityInteraction> filteredInteractions;
+        // Test each community interaction and rank it.
+        for( InteractionsSet::iterator it = candidateMerges.begin(); it != candidateMerges.end(); ++it ) {
+            double64_t improvement = TestMerge(graph, partition, alfa, *it);
+            if( improvement > 0.0 ) {
+                CommunityInteraction cI = *it;
+                std::cout << cI.m_CommunityId1 << " " << cI.m_CommunityId2 << " " << improvement << std::endl;
+                cI.m_Improvement = improvement;
+                filteredInteractions.push_back(cI);
+            }
+        } 
+        std::cout << filteredInteractions.size() << " " << candidateMerges.size() << std::endl;
+        // Sort community interactions by improvement.
+        uint32_t* tempNodeLabels = new uint32_t[partition->m_NumNodes];
+        memcpy(tempNodeLabels, partition->m_NodeLabels, sizeof(uint32_t)*partition->m_NumNodes);
+        std::sort(filteredInteractions.begin(), filteredInteractions.end(), CompareByImprovement);
+        std::set<uint32_t> touched;
+        uint32_t numInteractions = filteredInteractions.size();
+        for( uint32_t i = 0; i < numInteractions; ++i ) {
+            if( (touched.find(filteredInteractions[i].m_CommunityId1) == touched.end()) && 
+                    (touched.find(filteredInteractions[i].m_CommunityId2) == touched.end()) ) {
+                uint32_t communitySize = partition->m_Communities[partition->m_CommunityIndices[filteredInteractions[i].m_CommunityId1]];
+                const uint32_t* community = &partition->m_Communities[partition->m_CommunityIndices[filteredInteractions[i].m_CommunityId1]+1];
+                for( uint32_t j = 0; j < communitySize; ++j ) {
+                    tempNodeLabels[community[j]] = filteredInteractions[i].m_CommunityId2;
+                }
+                touched.insert(filteredInteractions[i].m_CommunityId1);
+                touched.insert(filteredInteractions[i].m_CommunityId2);
+            }
+        }
+
+        // Perform interactions constrained by independence and create a new labels array to create a partition from.
+        FreeResources(partition);
+        if (InitializeFromLabelsArray(graph, partition, tempNodeLabels, alfa)) {
+            printf("Error initializing from label array.\n");
+            return 1;
+        }
+        delete [] tempNodeLabels;
+        return 0;
+    }
+    /***************************************************************************/
+
     /** @brief Measures the memory consumption of a partition.
       @param partition The partition to measure.
       @return The size in bytes of the structure.*/
@@ -701,34 +827,50 @@ namespace scd {
 
         uint32_t remainingTries = lookahead;
         bool improve = true;
-        while (improve) {
-            printf("\n");
-            uint64_t initTime = StartClock();
-            improve = false;
-            printf("Starting improvement iteration ...\n");
-            if (PerformImprovementStep(graph, partition, alfa)) {
-                printf("Error while performing an improvement step.\n");
-                return 1;
-            }
-
-            printf("New WCC: %f\n", partition->m_WCC / graph->GetNumNodes());
-            printf("Best WCC: %f\n", bestPartition.m_WCC / graph->GetNumNodes());
-            printf("Memory required by this iteration: %lu bytes \n", MeasureMemoryConsumption(partition) + MeasureMemoryConsumption(&bestPartition));
-
-            if (partition->m_WCC - bestPartition.m_WCC > 0.0f) {
-                if (((partition->m_WCC - bestPartition.m_WCC) / bestPartition.m_WCC) > 0.01f) {
-                    remainingTries = lookahead;
+        while(improve) {
+            while (improve) {
+                printf("\n");
+                uint64_t initTime = StartClock();
+                improve = false;
+                printf("Starting improvement iteration ...\n");
+                if (PerformImprovementStep(graph, partition, alfa)) {
+                    printf("Error while performing an improvement step.\n");
+                    return 1;
                 }
+
+                printf("New WCC: %f\n", partition->m_WCC / graph->GetNumNodes());
+                printf("Best WCC: %f\n", bestPartition.m_WCC / graph->GetNumNodes());
+                printf("Memory required by this iteration: %lu bytes \n", MeasureMemoryConsumption(partition) + MeasureMemoryConsumption(&bestPartition));
+
+                if (partition->m_WCC - bestPartition.m_WCC > 0.0f) {
+             //       if (((partition->m_WCC - bestPartition.m_WCC) / bestPartition.m_WCC) > 0.01f) {
+                        remainingTries = lookahead;
+              //      }
+                    FreeResources(&bestPartition);
+                    CopyPartition(&bestPartition, partition);
+                } 
+
+
+                printf("Iteration time: %lu ms\n", StopClock(initTime));
+                if(remainingTries > 0) {
+                    remainingTries--;
+                    improve = true;
+                }
+            }
+/*            printf("Trying to merge communities\n");
+            MergeCommunities(graph, partition, alfa);
+            printf("Merge: New WCC: %f\n", partition->m_WCC / graph->GetNumNodes());
+            printf("Merge: Best WCC: %f\n", bestPartition.m_WCC / graph->GetNumNodes());
+            if( partition->m_WCC - bestPartition.m_WCC > 0.0f ) {
+                printf("Merging communities improved the partition\n");
+            //    if (((partition->m_WCC - bestPartition.m_WCC) / bestPartition.m_WCC) > 0.01f) {
+                    remainingTries = lookahead;
+             //   }
                 FreeResources(&bestPartition);
                 CopyPartition(&bestPartition, partition);
-            } 
-
-            printf("Iteration time: %lu ms\n", StopClock(initTime));
-
-            if(remainingTries > 0) {
-                remainingTries--;
                 improve = true;
             }
+            */
         }
 
         FreeResources(partition);
