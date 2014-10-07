@@ -240,31 +240,6 @@ namespace scd {
       @param[in] p_ext The probability that two edges leaving the community close a triangle.
       @param[in] alfa The alfa parameter controlling the cohesivness of the communities.*/
     static double64_t CheckForIncrement(int32_t r, int32_t d_in, int32_t d_out, uint32_t c_out, double64_t p_in, double64_t p_ext, const double64_t alfa) {
-       /* double64_t t;
-        if (r > 0) {
-            t = (c_out - d_in) / (double64_t) r;
-        } else {
-            t = 0.0;
-        }
-        double64_t A = 0.0;
-        double64_t denom = 0.0;
-        denom = (d_in * (d_in - 1) * p_in + d_out * (d_out + d_in - 1) * p_ext);
-        if (denom != 0.0 && ((r + d_out) > 0)) {
-            A = ((d_in * (d_in - 1) * p_in) / denom) * (d_in + d_out) / (double64_t) (r + d_out);
-        }
-        double64_t BMinus = 0.0;
-        denom = (r - 1)*(r - 2) * p_in * p_in * p_in + (d_in - 1) * p_in + t * (r - 1) * p_in * p_ext + t * (t - 1) * p_ext + (d_out) * p_ext;
-        if (denom != 0.0 && ((r + t) > 0)) {
-            BMinus = (((d_in - 1) * p_in) / denom) * ((r - 1) * p_in + 1 + t) / (r + t);
-        }
-        double64_t CMinus = 0.0;
-        denom = (r - 1)*(r - 2) * p_in * p_in * p_in + t * (t - 1) * p_ext + t * (r - 1)*(p_in) * p_ext;
-        if (denom != 0.0 && ((r + t) > 0) && ((r - 1 + t) > 0)) {
-            CMinus = -(((r - 1)*(r - 2) * p_in * p_in * p_in) / denom) * ((r - 1) * p_in + t) / ((r + t)*(r - 1 + t));
-        }
-        return (A + d_in * BMinus + (r - d_in) * CMinus);
-        */
-
         double64_t t;
         if (r > 0) {
             t = (c_out - d_in) / (double64_t) r;
@@ -274,34 +249,21 @@ namespace scd {
         // Node v 
         double64_t A = 0.0;
         double64_t denom = 0.0;
-        denom = (d_in * (d_in - 1) * p_in + 
-                d_out * (d_out - 1) * p_ext) +
-                d_out * d_in * p_ext;
-        denom *= d_in + d_out + alfa*(r-1-d_in);
+        denom = d_in + d_out + alfa*(r-d_in);
         if (denom != 0.0) {
-            A = ((d_in * (d_in - 1) * p_in) * (d_in + d_out)) / (denom);
+            A = d_in / (denom);
         }
-
         // Nodes connected with v 
         double64_t BMinus = 0.0;
-        denom = (r - 1)*(r - 2) * p_in * p_in * p_in + 
-                2*(d_in - 1) * p_in + 
-                t * (r - 1) * p_in * p_ext + 
-                t * (t - 1) * p_ext + 
-                (d_out) * p_ext;
-        denom *= (r-1)*p_in + 1 + t + alfa*(r - (r-1)*p_in - 1);
+        denom = (r-1)*p_in+1+t+alfa*(r-(r-1)*p_in-1);
         if (denom != 0.0) {
-            BMinus = (2*(d_in - 1) * p_in) * ((r - 1) * p_in + 1 + t) / denom;
+            BMinus = 1/denom;
         }
         // Nodes not connected with v 
         double64_t CMinus = 0.0;
-        denom = (r - 1)*(r - 2) * p_in * p_in * p_in +
-                t * (t - 1) * p_ext + 
-                t * (r - 1)*(p_in) * p_ext;
-        denom *= (r-1)*p_in + t + alfa*(r - (r-1)*p_in);
-        denom *= (r-1)*p_in + t + alfa*(r - (r-1)*p_in - 1);
-        if (denom != 0.0 && ((r + t) > 0) && ((r - 1 + t) > 0)) {
-            CMinus = -((r - 1)*(r - 2) * p_in * p_in * p_in) * ((r - 1) * p_in + t)*alfa / denom;
+        denom =(alfa*p_in*r-alfa*p_in-alfa*r-p_in*r+p_in-t)*(alfa*p_in*r-alfa*p_in-alfa*r-p_in*r+alfa+p_in-t) ;
+        if (denom != 0.0 ) {
+            CMinus = -((r-1)*p_in*alfa) / denom;
         }
         // Total 
         return (A + d_in * BMinus + (r - d_in) * CMinus);
@@ -857,7 +819,7 @@ namespace scd {
                     improve = true;
                 }
             }
-/*            printf("Trying to merge communities\n");
+            /*printf("Trying to merge communities\n");
             MergeCommunities(graph, partition, alfa);
             printf("Merge: New WCC: %f\n", partition->m_WCC / graph->GetNumNodes());
             printf("Merge: Best WCC: %f\n", bestPartition.m_WCC / graph->GetNumNodes());

@@ -115,8 +115,11 @@ namespace scd {
             }
         }
         
-        return ((internalTriangles / (double64_t) graph->GetTotalTriangles(node)) *
+/*        return ((internalTriangles / (double64_t) graph->GetTotalTriangles(node)) *
                (triangleDegree / (double64_t) (triangleDegree + alfa*(communitySize - 1 - internalTriangleDegree))));
+               */
+
+        return  (internalTriangleDegree / (double64_t) (triangleDegree + alfa*(communitySize - 1 - internalTriangleDegree)));
     }
 
     double64_t 	ComputeWCC(const CGraph * graph, const double64_t alfa, std::set<uint32_t>& community ){
@@ -174,7 +177,7 @@ namespace scd {
 
             double64_t denom = (double64_t)(triangleDegree + alfa*(community.size() - 1 - internalTriangleDegree)); 
             if( denom != 0 ) {
-                WCC+=((internalTriangles / (double64_t)totalTriangles) * (triangleDegree / denom));
+                WCC+=((internalTriangleDegree / denom));
             }
         }
         return WCC;
