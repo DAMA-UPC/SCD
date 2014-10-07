@@ -19,6 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <common/types.h>
 #include <graph/graph.h>
+#include <set>
 namespace scd 
 {
 
@@ -32,15 +33,17 @@ namespace scd
 
 			/**	@brief Computes the WCC of a node against a community.
 			 * 	@param[in] graph The graph.
+			 * 	@param[in] alfa The alfa parameter controling the cohesiveness of the communities.
 			 * 	@param[in] communities The assignment of nodes to communities.
 			 * 	@param[in] labelsIndices The array of indexes of labels into the community inverse index.
 			 * 	@param[in] communitiesInvIndex The community inverse index.
 			 * 	@param[in] wccs An array where the WCCs of the nodes will be stored.
 			 * 	@return The WCC of the node against the community.*/
-	double64_t 	ComputeWCC(const CGraph * graph, const uint32_t * communities, const uint32_t numCommunities,  const uint32_t* labelsIndices, const uint32_t * communitiesInvIndex, double64_t* wccs);
+	double64_t 	ComputeWCC(const CGraph * graph, const double64_t alfa, const uint32_t * communities, const uint32_t numCommunities,  const uint32_t* labelsIndices, const uint32_t * communitiesInvIndex, double64_t* wccs);
 
 			/**	@brief Computes the WCC of a node against a community.
 			 * 	@param[in] graph The graph.
+			 * 	@param[in] alfa The alfa parameter controling the cohesiveness of the communities.
 			 * 	@param[in] node The node.
 			 * 	@param[in] communityLabel The label of the community to test against.
 			 * 	@param[in] communities The assignment of nodes to communities.
@@ -48,7 +51,9 @@ namespace scd
 			 * 	@param[in] labelsIndices The array of indexes of labels into the community inverse index.
 			 * 	@param[in] communitiesInvIndex The community inverse index.
 			 * 	@return The WCC of the node against the community.*/
-	double64_t 	ComputeWCC(const CGraph * graph, uint32_t node, uint32_t communityLabel, const uint32_t * communities, uint32_t communitySize );
+	double64_t 	ComputeWCC(const CGraph * graph, const double64_t alfa, uint32_t node, uint32_t communityLabel, const uint32_t * communities, uint32_t communitySize );
+
+	double64_t 	ComputeWCC(const CGraph * graph, const double64_t alfa, std::set<uint32_t>& community );
 }
 
 #endif

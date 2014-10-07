@@ -48,15 +48,17 @@ namespace scd {
 			 * 	@param[in] graph A pointer to the graph.	
 			 * 	@param[out] partition The partition structure to initializes. 
 			 * 	@param[in] partitionFileName The name of the partition file to load.	
+             *  @param[in] alfa The alfa parameter controlling the cohesivness of the communities.
 			 *	@return 0 if the computation was successful. 1 if there were errors.*/
-	uint32_t 	LoadPartition( const CGraph* graph, CommunityPartition* partition, const char_t* partitionFileName );
+	uint32_t 	LoadPartition( const CGraph* graph, CommunityPartition* partition, const char_t* partitionFileName, const double64_t alfa );
 
 
 			/**	@brief Initializes a partition structure with an initial partition. 
 			 * 	@param[in] graph A pointer to the graph.	
 			 * 	@param[out] partition The partition structure to initializes. 
+             *  @param[in] alfa The alfa parameter controlling the cohesivness of the communities.
 			 *	@return 0 if the computation was successful. 1 if there were errors.*/
-	uint32_t 	InitializeSimplePartition( const CGraph* graph, CommunityPartition* partition );
+	uint32_t 	InitializeSimplePartition( const CGraph* graph, CommunityPartition* partition, const double64_t alfa );
 		
 			/**	@brief Frees the resources used by the partition.
 			 *	@param[out] partition The partition to free.*/
@@ -75,8 +77,9 @@ namespace scd {
 			 * 	@param[out] partition The partition to improve.
 			 * 	@param[in] numThreads The number of threads.
 			 * 	@param[in] lookahead The number of lookahead iterations.
+             *  @param[in] alfa The alfa parameter controlling the cohesivness of the communities.
 			 * 	@return 0 if the execution was successful. 0 otherwise.*/ 
-	uint32_t	ImproveCommunities( const CGraph* graph, CommunityPartition* partition, uint32_t numThreads, uint32_t lookahead );
+	uint32_t	ImproveCommunities( const CGraph* graph, CommunityPartition* partition, uint32_t numThreads, uint32_t lookahead, const double64_t alfa );
 
 			/**	@brief Copies a partition into another partition.
 			 * 	@param[out] destPartition The destination partition.

@@ -107,7 +107,7 @@ int main(int argc, char ** argv) {
     //=================== LOAD PARTITION ============================
     printf("PartitionFile: %s\n", partitionFileName);
     CommunityPartition partition;
-    LoadPartition(&graph,&partition,partitionFileName);
+    LoadPartition(&graph,&partition,partitionFileName, 1.0f);
     //======================================================================
 
     printf("*******************************************************\n");
