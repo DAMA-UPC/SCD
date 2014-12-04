@@ -857,7 +857,7 @@ namespace scd {
                     improve = true;
                 }
             }
-/*            printf("Trying to merge communities\n");
+            printf("Trying to merge communities\n");
             MergeCommunities(graph, partition, alfa);
             printf("Merge: New WCC: %f\n", partition->m_WCC / graph->GetNumNodes());
             printf("Merge: Best WCC: %f\n", bestPartition.m_WCC / graph->GetNumNodes());
@@ -870,7 +870,6 @@ namespace scd {
                 CopyPartition(&bestPartition, partition);
                 improve = true;
             }
-            */
         }
 
         FreeResources(partition);
