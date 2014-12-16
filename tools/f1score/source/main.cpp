@@ -95,8 +95,8 @@ static double Average( double array[], int size ) {
 
 int main(int argc, char ** argv)
 {
-	if(argc < 3){
-		std::cout << "Wrong number of arguments. Usage: F1Score <partitionA> <partitionB>" << std::endl;
+	if(argc < 4){
+		std::cout << "Wrong number of arguments. Usage: F1Score <partitionA> <partitionB> <datafilename>" << std::endl;
 		exit(0);
 	}
 
@@ -222,6 +222,14 @@ int main(int argc, char ** argv)
     std::cout << "Average recall partition B: " << Average(recallPartitionB, partitionB->size() ) << std::endl;
 
     std::cout << "F1Score: " << (Average( f1ScorePartitionA, partitionA->size() ) + Average( f1ScorePartitionB, partitionB->size() )) / 2 << std::endl; 
+
+	std::ofstream outputFile;
+	outputFile.open(std::string(argv[3]).append(".partA").c_str());
+    for( int i = 0; i < partitionA->size(); ++i) {
+        std::set<unsigned int>* community = (*partitionA)[i];
+        outputFile << community->size() << " " << precisionPartitionA[i] << " " << recallPartitionA[i] << " " << f1ScorePartitionA[i] << "\n";
+    }
+    outputFile.close();
 
     delete [] f1ScorePartitionA;
     delete [] f1ScorePartitionB;
