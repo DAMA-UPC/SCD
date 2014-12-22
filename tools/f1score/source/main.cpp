@@ -150,6 +150,13 @@ int main(int argc, char ** argv)
 
     double* f1ScorePartitionA = new double[partitionA->size()];
     double* f1ScorePartitionB = new double[partitionB->size()];
+
+    double* f1ScorePrecisionPartitionA = new double[partitionA->size()];
+    double* f1ScorePrecisionPartitionB = new double[partitionB->size()];
+
+    double* f1ScoreRecallPartitionA = new double[partitionA->size()];
+    double* f1ScoreRecallPartitionB = new double[partitionB->size()];
+
 	double* precisionPartitionA = new double[partitionA->size()];
 	double* precisionPartitionB = new double[partitionB->size()];
 	double* recallPartitionA = new double[partitionA->size()];
@@ -157,9 +164,13 @@ int main(int argc, char ** argv)
 
     /** Initializing arrays to 0 **/
     std::memset(f1ScorePartitionA,0,sizeof(double)*partitionA->size());
+    std::memset(f1ScorePrecisionPartitionA,0,sizeof(double)*partitionA->size());
+    std::memset(f1ScoreRecallPartitionA,0,sizeof(double)*partitionA->size());
     std::memset(precisionPartitionA,0,sizeof(double)*partitionA->size());
     std::memset(recallPartitionA,0,sizeof(double)*partitionA->size());
     std::memset(f1ScorePartitionB,0,sizeof(double)*partitionB->size());
+    std::memset(f1ScorePrecisionPartitionB,0,sizeof(double)*partitionB->size());
+    std::memset(f1ScoreRecallPartitionB,0,sizeof(double)*partitionB->size());
     std::memset(precisionPartitionB,0,sizeof(double)*partitionB->size());
     std::memset(recallPartitionB,0,sizeof(double)*partitionB->size());
 
@@ -183,7 +194,11 @@ int main(int argc, char ** argv)
 			double precision;
 			double recall;
 			double f1Score = F1Score(*community,*community2, &precision, &recall );
-            f1ScorePartitionA[i] = f1Score > f1ScorePartitionA[i] ? f1Score : f1ScorePartitionA[i];
+            if(f1Score > f1ScorePartitionA[i]) {
+                f1ScorePartitionA[i] = f1Score;
+                f1ScorePrecisionPartitionA[i] = precision;
+                f1ScoreRecallPartitionA[i] = recall;
+            }
             precisionPartitionA[i] = precision > precisionPartitionA[i] ? precision : precisionPartitionA[i];
             recallPartitionA[i] = recall > recallPartitionA[i] ? recall : recallPartitionA[i];
 		}
@@ -209,7 +224,11 @@ int main(int argc, char ** argv)
 			double precision;
 			double recall;
 			double f1Score = F1Score(*community,*community2, &precision, &recall );
-            f1ScorePartitionB[i] = f1Score > f1ScorePartitionB[i] ? f1Score : f1ScorePartitionB[i];
+            if(f1Score > f1ScorePartitionB[i]) {
+                f1ScorePartitionB[i] = f1Score;
+                f1ScorePrecisionPartitionB[i] = precision;
+                f1ScoreRecallPartitionB[i] = recall;
+            }
             precisionPartitionB[i] = precision > precisionPartitionB[i] ? precision : precisionPartitionB[i];
             recallPartitionB[i] = recall > recallPartitionB[i] ? recall : recallPartitionB[i];
 		}
@@ -227,14 +246,22 @@ int main(int argc, char ** argv)
 	outputFile.open(std::string(argv[3]).append(".partA").c_str());
     for( int i = 0; i < partitionA->size(); ++i) {
         std::set<unsigned int>* community = (*partitionA)[i];
-        outputFile << community->size() << " " << precisionPartitionA[i] << " " << recallPartitionA[i] << " " << f1ScorePartitionA[i] << "\n";
+        outputFile << community->size() << " " << precisionPartitionA[i] << " " << recallPartitionA[i] << " " << f1ScorePartitionA[i] << " " << f1ScorePrecisionPartitionA[i] << " " <<  f1ScoreRecallPartitionA[i] << "\n";
     }
     outputFile.close();
 
     delete [] f1ScorePartitionA;
     delete [] f1ScorePartitionB;
+
+    delete [] f1ScorePrecisionPartitionA;
+    delete [] f1ScorePrecisionPartitionB;
+
+    delete [] f1ScoreRecallPartitionA;
+    delete [] f1ScoreRecallPartitionB;
+
     delete [] precisionPartitionA;
     delete [] precisionPartitionB;
+
     delete [] recallPartitionA;
     delete [] recallPartitionB;
 	return 0;

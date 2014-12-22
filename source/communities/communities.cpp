@@ -47,6 +47,7 @@ namespace scd {
         MovementType m_MovementType;
         uint32_t m_NodeId;
         uint32_t m_Community;
+        double64_t m_Improvement;
     };
 
     /** @brief Compares two node clustering.
@@ -391,8 +392,10 @@ namespace scd {
         if (bestInsertImprovement > 0.0f && ((bestInsertImprovement) > bestRemoveImprovement)) {
             movement.m_MovementType = E_REMOVE_AND_INSERT;
             movement.m_Community = bestInsertCommunity;
+            movement.m_Improvement = bestInsertImprovement;
         } else if (bestRemoveImprovement > 0.0f) {
             movement.m_MovementType = E_REMOVE;
+            movement.m_Improvement = bestRemoveImprovement;
         }
         return movement;
     }
@@ -596,13 +599,16 @@ namespace scd {
         // Test each community interaction and rank it.
         for( InteractionsSet::iterator it = candidateMerges.begin(); it != candidateMerges.end(); ++it ) {
             CommunityInteraction cI = *it;
-            if( partition->m_Communities[partition->m_CommunityIndices[cI.m_CommunityId1]] > 2 &&
-                    partition->m_Communities[partition->m_CommunityIndices[cI.m_CommunityId2]] > 2 ) {
-                if(ShouldMerge(graph, partition, alfa, cI) > 0.0 ) {
+            uint32_t size1 = partition->m_Communities[partition->m_CommunityIndices[cI.m_CommunityId1]];
+            uint32_t size2 = partition->m_Communities[partition->m_CommunityIndices[cI.m_CommunityId2]];
+            /*if( size1 == 1 || size2 == 1 )*/ {
+                /*if(ShouldMerge(graph, partition, alfa, cI) > 0.0 )*/ {
+                    //ShouldMerge(graph, partition, alfa, cI);
                     earlyFilter++;
                     double64_t improvement = TestMerge(graph, partition, alfa, cI);
                     if( improvement > 0.0 ) {
-                        std::cout << cI.m_CommunityId1 << " " << cI.m_CommunityId2 << " " << improvement << std::endl;
+//                        std::cout << size1 << " " << size2 << " " << cI.degree << std::endl;
+                        //std::cout << cI.m_CommunityId1 << " " << cI.m_CommunityId2 << " " << improvement << std::endl;
                         cI.m_Improvement = improvement;
                         filteredInteractions.push_back(cI);
                     }
@@ -639,6 +645,111 @@ namespace scd {
         return 0;
     }
     /***************************************************************************/
+
+    /*****************************EXPERIMENTAL 2 ******************************/
+
+    bool CompareMovements(const Movement& a, const Movement& b) {
+        if(a.m_Community < b.m_Community) return true;
+        if(b.m_Community < a.m_Community) return false;
+        if(a.m_Improvement > b.m_Improvement) return true;
+        if(b.m_Improvement > a.m_Improvement) return false;
+        return false;
+    }
+
+    static uint32_t PerformImprovementStep2(const CGraph* graph, CommunityPartition* partition, const double64_t alfa) {
+        std::vector<Movement>* movements = new std::vector<Movement>[num_threads];
+        uint32_t N = graph->GetNumNodes();
+
+#pragma omp parallel for schedule(SCD_SCHEDULING,SCD_THREAD_BLOCK_SIZE) 
+        for (uint32_t i = 0; i < N; i++) {
+            int thread = omp_get_thread_num();
+            if (i % 100000 == 0) {
+                printf("Thread %d: Checked movements of %d nodes.\n", thread, i);
+            }
+            Movement movement;
+            movement = CheckForBestMovement(graph, i, partition, alfa);
+            if (movement.m_MovementType != E_NO_MOVEMENT) {
+                movements[thread].push_back(movement);
+            }
+        }
+        printf("All movements checked\n");
+
+        for( uint32_t i = 0; i < N; i++) {
+            std::sort((movements[i]).begin(), (movements[i]).end(),CompareMovements);
+        }
+
+        uint32_t* tempNodeLabels = new uint32_t[partition->m_NumNodes];
+        memcpy(&tempNodeLabels[0], &partition->m_NodeLabels[0], sizeof (uint32_t) * partition->m_NumNodes);
+        uint32_t totalMovements = 0;
+
+        //uint32_t nextLabel = partition->m_NumCommunities;
+        uint32_t removeMovements = 0;
+        uint32_t removeAndInsertMovements = 0;
+        uint32_t insertMovements = 0;
+
+        
+#pragma omp parallel for schedule(static,1)   
+        for (uint32_t thread = 0; thread < num_threads; thread++) {
+            uint32_t numMovements = movements[thread].size();
+            totalMovements += numMovements;
+            uint32_t nextLabelThread = partition->m_NumCommunities + numMovements * thread;            
+
+            uint32_t previousCommunity = 100000000;
+            for (uint32_t i = 0; i < numMovements; i++) {
+                Movement movement = (movements[thread])[i];
+                if(movement.m_Community != previousCommunity) {
+                    previousCommunity = movement.m_Community;
+                    switch (movement.m_MovementType) {
+                        case E_REMOVE:
+                            tempNodeLabels[movement.m_NodeId] = nextLabelThread;
+                            removeMovements++;
+                            nextLabelThread++;
+                            break;
+                        case E_REMOVE_AND_INSERT:
+                            tempNodeLabels[movement.m_NodeId] = movement.m_Community;
+                            if (partition->m_Communities[partition->m_CommunityIndices[partition->m_NodeLabels[movement.m_NodeId]]] == 1) {
+                                insertMovements++;
+                            } else {
+                                removeAndInsertMovements++;
+                            }
+                            break;
+                    }
+                }
+            }
+        }
+        delete [] movements;
+        printf(" Number of removes performed: %d\n", removeMovements);
+        printf(" Number of remove and insert performed: %d\n", removeAndInsertMovements);
+        printf(" Number of insert performed: %d\n", insertMovements);
+        FreeResources(partition);
+
+        if (InitializeFromLabelsArray(graph, partition, tempNodeLabels, alfa)) {
+            printf("Error initializing from label array.\n");
+            return 1;
+        }
+        delete [] tempNodeLabels;
+
+        return 0;
+    }
+
+/*    Movement PerformCommunityCentricRefinement( const CGraph* graph, const CommunityPartition partition*, const double64_t alfa, uint32_t* communityId, uint32_t size ) {
+        Movement bestMovement;
+        bestMovement.m_Type = E_NO_MOVEMENT;
+        for( int i = 0; i < size; ++i ) {
+           uint32_t node = community[i];
+           const uint32_t* adjacencies  = graph->GetNeighbors(node);
+           const uint32_t degree = graph->GetDegree(node);
+           for(uint32_t j = 0; j < degree; ++j ) {
+               uint32_t neighbor = adjacencies[j];
+               if(partition->m_Communities[partition->m_CommunityIndices[partition->m_NodeLabels[neighbor]]] == 1 ) {
+
+               }
+           }
+        }
+    }
+    */
+
+
 
     /** @brief Measures the memory consumption of a partition.
       @param partition The partition to measure.
@@ -913,6 +1024,18 @@ namespace scd {
                 CopyPartition(&bestPartition, partition);
                 improve = true;
             }
+/*            printf("Trying to perform step 2\n");
+            PerformImprovementStep2(graph, partition, alfa);
+            printf("Step2: New WCC: %f\n", partition->m_WCC / graph->GetNumNodes());
+            printf("Step2: Best WCC: %f\n", bestPartition.m_WCC / graph->GetNumNodes());
+            if( partition->m_WCC - bestPartition.m_WCC > 0.0f ) {
+                printf("Improvement Step 2\n");
+                remainingTries = lookahead;
+                FreeResources(&bestPartition);
+                CopyPartition(&bestPartition, partition);
+                improve = true;
+            }
+            */
         }
 
         FreeResources(partition);
