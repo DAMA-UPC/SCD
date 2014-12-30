@@ -172,14 +172,14 @@ int main(int argc, char ** argv)
 	std::memset(f1ScoreRecallPartitionA,0,sizeof(double)*partitionA->size());
 	std::memset(precisionPartitionA,0,sizeof(double)*partitionA->size());
 	std::memset(recallPartitionA,0,sizeof(double)*partitionA->size());
-	std::memset(coveragePartitionA,0,sizeof(double)*partitionA->size());
+	std::memset(coveragePartitionA,0,sizeof(int)*partitionA->size());
 
 	std::memset(f1ScorePartitionB,0,sizeof(double)*partitionB->size());
 	std::memset(f1ScorePrecisionPartitionB,0,sizeof(double)*partitionB->size());
 	std::memset(f1ScoreRecallPartitionB,0,sizeof(double)*partitionB->size());
 	std::memset(precisionPartitionB,0,sizeof(double)*partitionB->size());
 	std::memset(recallPartitionB,0,sizeof(double)*partitionB->size());
-	std::memset(coveragePartitionB,0,sizeof(double)*partitionB->size());
+	std::memset(coveragePartitionB,0,sizeof(int)*partitionB->size());
 
 	std::cout << "Computing F1Score of partition A" << std::endl;
 	for( unsigned int i = 0; i < partitionA->size(); i++){
