@@ -256,7 +256,7 @@ int main(int argc, char ** argv)
 	outputFileA.open(std::string(argv[3]).append(".partA").c_str());
 	for( int i = 0; i < partitionA->size(); ++i) {
 		std::set<unsigned int>* community = (*partitionA)[i];
-		outputFileA << community->size() << " " << precisionPartitionA[i] << " " << recallPartitionA[i] << " " << f1ScorePartitionA[i] << " " << f1ScorePrecisionPartitionA[i] << " " <<  f1ScoreRecallPartitionA[i] << coveragePartitionA[i] / (double) community->size() << "\n";
+		outputFileA << community->size() << " " << precisionPartitionA[i] << " " << recallPartitionA[i] << " " << f1ScorePartitionA[i] << " " << f1ScorePrecisionPartitionA[i] << " " <<  f1ScoreRecallPartitionA[i] << " " << coveragePartitionA[i] / (double) community->size() << "\n";
 	}
 	outputFileA.close();
 
