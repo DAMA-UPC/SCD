@@ -598,7 +598,7 @@ namespace scd {
             CommunityInteraction cI = *it;
             if( partition->m_Communities[partition->m_CommunityIndices[cI.m_CommunityId1]] > 2 &&
                     partition->m_Communities[partition->m_CommunityIndices[cI.m_CommunityId2]] > 2 ) {
-                if(ShouldMerge(graph, partition, alfa, cI) > 0.0 ) {
+                /*if(ShouldMerge(graph, partition, alfa, cI) > 0.0 )*/ {
                     earlyFilter++;
                     double64_t improvement = TestMerge(graph, partition, alfa, cI);
                     if( improvement > 0.0 ) {
