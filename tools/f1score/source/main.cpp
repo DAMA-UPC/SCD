@@ -1,15 +1,15 @@
 /*F1Score is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
-F1Score is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+  F1Score is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include <algorithm>
 #include <fstream>
@@ -61,7 +61,7 @@ std::vector<std::set<unsigned int>*>* ParseSets(std::ifstream& file) {
 double F1Score( std::set<unsigned int>& com1, std::set<unsigned int>& com2, double* precision, double* recall) {
 	*precision = 0.0f;
 	*recall = 0.0f;
-	
+
 	//computing intersection
 	unsigned int counter = 0;
 	if( com1.size() < com2.size() ) {
@@ -86,11 +86,11 @@ double F1Score( std::set<unsigned int>& com1, std::set<unsigned int>& com2, doub
 }
 
 static double Average( double array[], int size ) {
-    double accum = 0.0;
-    for( int i = 0; i < size; ++i ) {
-        accum+= array[i];
-    }
-    return accum / size;
+	double accum = 0.0;
+	for( int i = 0; i < size; ++i ) {
+		accum+= array[i];
+	}
+	return accum / size;
 }
 
 int main(int argc, char ** argv)
@@ -112,13 +112,13 @@ int main(int argc, char ** argv)
 		std::cout << "PARTITION FILE B NOT FOUND" << std::endl;
 		exit(1);
 	}
-	
-    std::cout << "Parsing Input Files"<< std::endl;
+
+	std::cout << "Parsing Input Files"<< std::endl;
 	partitionA = ParseSets(inputFileA);
 	inputFileA.close();
-	
+
 	partitionB = ParseSets(inputFileB);
-    inputFileB.close();
+	inputFileB.close();
 
 	std::map<unsigned int, std::set<unsigned int> > nodePartitionA;
 	std::map<unsigned int, std::set<unsigned int> > nodePartitionB;
@@ -134,7 +134,7 @@ int main(int argc, char ** argv)
 		for( auto it = community->begin(); it != community->end(); it++ ){
 			unsigned int node = *it;
 			auto it2 = nodePartitionA.find(node);
-            nodePartitionA[node].insert(i);
+			nodePartitionA[node].insert(i);
 		}
 	}
 
@@ -144,49 +144,58 @@ int main(int argc, char ** argv)
 		for( auto it = community->begin(); it != community->end(); it++ ){
 			unsigned int node = *it;
 			auto it2 = nodePartitionB.find(node);
-            nodePartitionB[node].insert(i);
+			nodePartitionB[node].insert(i);
 		}
 	}
 
-    double* f1ScorePartitionA = new double[partitionA->size()];
-    double* f1ScorePartitionB = new double[partitionB->size()];
+	double* f1ScorePartitionA = new double[partitionA->size()];
+	double* f1ScorePartitionB = new double[partitionB->size()];
 
-    double* f1ScorePrecisionPartitionA = new double[partitionA->size()];
-    double* f1ScorePrecisionPartitionB = new double[partitionB->size()];
+	double* f1ScorePrecisionPartitionA = new double[partitionA->size()];
+	double* f1ScorePrecisionPartitionB = new double[partitionB->size()];
 
-    double* f1ScoreRecallPartitionA = new double[partitionA->size()];
-    double* f1ScoreRecallPartitionB = new double[partitionB->size()];
+	double* f1ScoreRecallPartitionA = new double[partitionA->size()];
+	double* f1ScoreRecallPartitionB = new double[partitionB->size()];
 
 	double* precisionPartitionA = new double[partitionA->size()];
 	double* precisionPartitionB = new double[partitionB->size()];
+
 	double* recallPartitionA = new double[partitionA->size()];
 	double* recallPartitionB = new double[partitionB->size()];
 
-    /** Initializing arrays to 0 **/
-    std::memset(f1ScorePartitionA,0,sizeof(double)*partitionA->size());
-    std::memset(f1ScorePrecisionPartitionA,0,sizeof(double)*partitionA->size());
-    std::memset(f1ScoreRecallPartitionA,0,sizeof(double)*partitionA->size());
-    std::memset(precisionPartitionA,0,sizeof(double)*partitionA->size());
-    std::memset(recallPartitionA,0,sizeof(double)*partitionA->size());
-    std::memset(f1ScorePartitionB,0,sizeof(double)*partitionB->size());
-    std::memset(f1ScorePrecisionPartitionB,0,sizeof(double)*partitionB->size());
-    std::memset(f1ScoreRecallPartitionB,0,sizeof(double)*partitionB->size());
-    std::memset(precisionPartitionB,0,sizeof(double)*partitionB->size());
-    std::memset(recallPartitionB,0,sizeof(double)*partitionB->size());
+	int* coveragePartitionA = new int[partitionA->size()];
+	int* coveragePartitionB = new int[partitionB->size()];
+
+	/** Initializing arrays to 0 **/
+	std::memset(f1ScorePartitionA,0,sizeof(double)*partitionA->size());
+	std::memset(f1ScorePrecisionPartitionA,0,sizeof(double)*partitionA->size());
+	std::memset(f1ScoreRecallPartitionA,0,sizeof(double)*partitionA->size());
+	std::memset(precisionPartitionA,0,sizeof(double)*partitionA->size());
+	std::memset(recallPartitionA,0,sizeof(double)*partitionA->size());
+	std::memset(coveragePartitionA,0,sizeof(int)*partitionA->size());
+
+	std::memset(f1ScorePartitionB,0,sizeof(double)*partitionB->size());
+	std::memset(f1ScorePrecisionPartitionB,0,sizeof(double)*partitionB->size());
+	std::memset(f1ScoreRecallPartitionB,0,sizeof(double)*partitionB->size());
+	std::memset(precisionPartitionB,0,sizeof(double)*partitionB->size());
+	std::memset(recallPartitionB,0,sizeof(double)*partitionB->size());
+	std::memset(coveragePartitionB,0,sizeof(int)*partitionB->size());
 
 	std::cout << "Computing F1Score of partition A" << std::endl;
 	for( unsigned int i = 0; i < partitionA->size(); i++){
 		std::set<unsigned int>* community = (*partitionA)[i];
 		std::set<unsigned int> communities;
 
-        // Selecting candidate communities to compare with.
+		// Selecting candidate communities to compare with.
 		for( auto it = community->begin(); it != community->end(); it++ ) {
 			auto it2 = nodePartitionB.find(*it);
 			if(it2 != nodePartitionB.end()) {
 				for( auto it3 = (*it2).second.begin(); it3 != (*it2).second.end(); it3++ ) {
 					communities.insert(*it3);
 				}
-			}
+				coveragePartitionA[i]++;
+			} 
+
 		}
 
 		for( auto it = communities.begin(); it != communities.end(); it++){
@@ -194,13 +203,13 @@ int main(int argc, char ** argv)
 			double precision;
 			double recall;
 			double f1Score = F1Score(*community,*community2, &precision, &recall );
-            if(f1Score > f1ScorePartitionA[i]) {
-                f1ScorePartitionA[i] = f1Score;
-                f1ScorePrecisionPartitionA[i] = precision;
-                f1ScoreRecallPartitionA[i] = recall;
-            }
-            precisionPartitionA[i] = precision > precisionPartitionA[i] ? precision : precisionPartitionA[i];
-            recallPartitionA[i] = recall > recallPartitionA[i] ? recall : recallPartitionA[i];
+			if(f1Score > f1ScorePartitionA[i]) {
+				f1ScorePartitionA[i] = f1Score;
+				f1ScorePrecisionPartitionA[i] = precision;
+				f1ScoreRecallPartitionA[i] = recall;
+			}
+			precisionPartitionA[i] = precision > precisionPartitionA[i] ? precision : precisionPartitionA[i];
+			recallPartitionA[i] = recall > recallPartitionA[i] ? recall : recallPartitionA[i];
 		}
 	}
 
@@ -209,13 +218,14 @@ int main(int argc, char ** argv)
 		std::set<unsigned int>* community = (*partitionB)[i];
 		std::set<unsigned int> communities;
 
-        // Selecting candidate communities to compare with.
+		// Selecting candidate communities to compare with.
 		for( auto it = community->begin(); it != community->end(); it++ ) {
 			auto it2 = nodePartitionA.find(*it);
 			if(it2 != nodePartitionA.end()) {
 				for( auto it3 = (*it2).second.begin(); it3 != (*it2).second.end(); it3++ ) {
 					communities.insert(*it3);
 				}
+				coveragePartitionB[i]++;
 			}
 		}
 
@@ -224,45 +234,57 @@ int main(int argc, char ** argv)
 			double precision;
 			double recall;
 			double f1Score = F1Score(*community,*community2, &precision, &recall );
-            if(f1Score > f1ScorePartitionB[i]) {
-                f1ScorePartitionB[i] = f1Score;
-                f1ScorePrecisionPartitionB[i] = precision;
-                f1ScoreRecallPartitionB[i] = recall;
-            }
-            precisionPartitionB[i] = precision > precisionPartitionB[i] ? precision : precisionPartitionB[i];
-            recallPartitionB[i] = recall > recallPartitionB[i] ? recall : recallPartitionB[i];
+			if(f1Score > f1ScorePartitionB[i]) {
+				f1ScorePartitionB[i] = f1Score;
+				f1ScorePrecisionPartitionB[i] = precision;
+				f1ScoreRecallPartitionB[i] = recall;
+			}
+			precisionPartitionB[i] = precision > precisionPartitionB[i] ? precision : precisionPartitionB[i];
+			recallPartitionB[i] = recall > recallPartitionB[i] ? recall : recallPartitionB[i];
 		}
 	}
-	
-    std::cout << "Average precision partition A: " << Average(precisionPartitionA, partitionA->size() ) << std::endl;
-    std::cout << "Average recall partition A: " << Average(recallPartitionA, partitionA->size() ) << std::endl;
 
-    std::cout << "Average precision partition B: " << Average(precisionPartitionB, partitionB->size() ) << std::endl;
-    std::cout << "Average recall partition B: " << Average(recallPartitionB, partitionB->size() ) << std::endl;
+	std::cout << "Average precision partition A: " << Average(precisionPartitionA, partitionA->size() ) << std::endl;
+	std::cout << "Average recall partition A: " << Average(recallPartitionA, partitionA->size() ) << std::endl;
 
-    std::cout << "F1Score: " << (Average( f1ScorePartitionA, partitionA->size() ) + Average( f1ScorePartitionB, partitionB->size() )) / 2 << std::endl; 
+	std::cout << "Average precision partition B: " << Average(precisionPartitionB, partitionB->size() ) << std::endl;
+	std::cout << "Average recall partition B: " << Average(recallPartitionB, partitionB->size() ) << std::endl;
 
-	std::ofstream outputFile;
-	outputFile.open(std::string(argv[3]).append(".partA").c_str());
-    for( int i = 0; i < partitionA->size(); ++i) {
-        std::set<unsigned int>* community = (*partitionA)[i];
-        outputFile << community->size() << " " << precisionPartitionA[i] << " " << recallPartitionA[i] << " " << f1ScorePartitionA[i] << " " << f1ScorePrecisionPartitionA[i] << " " <<  f1ScoreRecallPartitionA[i] << "\n";
-    }
-    outputFile.close();
+	std::cout << "F1Score: " << (Average( f1ScorePartitionA, partitionA->size() ) + Average( f1ScorePartitionB, partitionB->size() )) / 2 << std::endl; 
 
-    delete [] f1ScorePartitionA;
-    delete [] f1ScorePartitionB;
+	std::ofstream outputFileA;
+	outputFileA.open(std::string(argv[3]).append(".partA").c_str());
+	for( int i = 0; i < partitionA->size(); ++i) {
+		std::set<unsigned int>* community = (*partitionA)[i];
+		outputFileA << community->size() << " " << precisionPartitionA[i] << " " << recallPartitionA[i] << " " << f1ScorePartitionA[i] << " " << f1ScorePrecisionPartitionA[i] << " " <<  f1ScoreRecallPartitionA[i] << " " << coveragePartitionA[i] / (double) community->size() << "\n";
+	}
+	outputFileA.close();
 
-    delete [] f1ScorePrecisionPartitionA;
-    delete [] f1ScorePrecisionPartitionB;
+	std::ofstream outputFileB;
+	outputFileB.open(std::string(argv[3]).append(".partB").c_str());
+	for( int i = 0; i < partitionB->size(); ++i) {
+		std::set<unsigned int>* community = (*partitionB)[i];
+		outputFileB << community->size() << " " << precisionPartitionB[i] << " " << recallPartitionB[i] << " " << f1ScorePartitionB[i] << " " << f1ScorePrecisionPartitionB[i] << " " <<  f1ScoreRecallPartitionB[i] << " " << coveragePartitionB[i] / (double) community->size() << "\n";
+	}
+	outputFileB.close();
 
-    delete [] f1ScoreRecallPartitionA;
-    delete [] f1ScoreRecallPartitionB;
+	delete [] f1ScorePartitionA;
+	delete [] f1ScorePartitionB;
 
-    delete [] precisionPartitionA;
-    delete [] precisionPartitionB;
+	delete [] f1ScorePrecisionPartitionA;
+	delete [] f1ScorePrecisionPartitionB;
 
-    delete [] recallPartitionA;
-    delete [] recallPartitionB;
+	delete [] f1ScoreRecallPartitionA;
+	delete [] f1ScoreRecallPartitionB;
+
+	delete [] precisionPartitionA;
+	delete [] precisionPartitionB;
+
+	delete [] recallPartitionA;
+	delete [] recallPartitionB;
+
+	delete [] coveragePartitionA;
+	delete [] coveragePartitionB;
+
 	return 0;
 }

@@ -599,20 +599,14 @@ namespace scd {
         // Test each community interaction and rank it.
         for( InteractionsSet::iterator it = candidateMerges.begin(); it != candidateMerges.end(); ++it ) {
             CommunityInteraction cI = *it;
-            uint32_t size1 = partition->m_Communities[partition->m_CommunityIndices[cI.m_CommunityId1]];
-            uint32_t size2 = partition->m_Communities[partition->m_CommunityIndices[cI.m_CommunityId2]];
-            /*if( size1 == 1 || size2 == 1 )*/ {
-                /*if(ShouldMerge(graph, partition, alfa, cI) > 0.0 )*/ {
-                    //ShouldMerge(graph, partition, alfa, cI);
+            if( partition->m_Communities[partition->m_CommunityIndices[cI.m_CommunityId1]] > 2 &&
+                    partition->m_Communities[partition->m_CommunityIndices[cI.m_CommunityId2]] > 2 ) {
                     earlyFilter++;
                     double64_t improvement = TestMerge(graph, partition, alfa, cI);
                     if( improvement > 0.0 ) {
-//                        std::cout << size1 << " " << size2 << " " << cI.degree << std::endl;
-                        //std::cout << cI.m_CommunityId1 << " " << cI.m_CommunityId2 << " " << improvement << std::endl;
                         cI.m_Improvement = improvement;
                         filteredInteractions.push_back(cI);
                     }
-                }
             }
         } 
         std::cout << earlyFilter << " " << filteredInteractions.size() << " " << candidateMerges.size() << std::endl;
@@ -997,9 +991,9 @@ namespace scd {
                 printf("Memory required by this iteration: %lu bytes \n", MeasureMemoryConsumption(partition) + MeasureMemoryConsumption(&bestPartition));
 
                 if (partition->m_WCC - bestPartition.m_WCC > 0.0f) {
-             //       if (((partition->m_WCC - bestPartition.m_WCC) / bestPartition.m_WCC) > 0.01f) {
+                    if (((partition->m_WCC - bestPartition.m_WCC) / bestPartition.m_WCC) > 0.01f) {
                         remainingTries = lookahead;
-              //      }
+                    }
                     FreeResources(&bestPartition);
                     CopyPartition(&bestPartition, partition);
                 } 
@@ -1011,19 +1005,21 @@ namespace scd {
                     improve = true;
                 }
             }
-            printf("Trying to merge communities\n");
+	    /*EXPERIMENTAL*/
+/*            printf("Trying to merge communities\n");
             MergeCommunities(graph, partition, alfa);
             printf("Merge: New WCC: %f\n", partition->m_WCC / graph->GetNumNodes());
             printf("Merge: Best WCC: %f\n", bestPartition.m_WCC / graph->GetNumNodes());
             if( partition->m_WCC - bestPartition.m_WCC > 0.0f ) {
                 printf("Merging communities improved the partition\n");
-            //    if (((partition->m_WCC - bestPartition.m_WCC) / bestPartition.m_WCC) > 0.01f) {
+                if (((partition->m_WCC - bestPartition.m_WCC) / bestPartition.m_WCC) > 0.01f) {
                     remainingTries = lookahead;
-             //   }
+                }
                 FreeResources(&bestPartition);
                 CopyPartition(&bestPartition, partition);
                 improve = true;
             }
+	    */
         }
 
         FreeResources(partition);
