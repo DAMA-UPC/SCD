@@ -43,9 +43,7 @@ std::vector<std::set<unsigned int>*>* ParseSets(std::ifstream& file) {
 			set->insert(node);
 		}
 
-		if(set->size()>2) {
-			auxSets->push_back(set);
-		}
+        auxSets->push_back(set);
 	}
 
 	std::vector<std::set<unsigned int>*> * returnSet = new std::vector<std::set<unsigned int>*>();
@@ -254,17 +252,19 @@ int main(int argc, char ** argv)
 
 	std::ofstream outputFileA;
 	outputFileA.open(std::string(argv[3]).append(".partA").c_str());
+    outputFileA << "id|size|precision|recall|f1score|f1scorePrecision|f1scoreRecall|coverage\n";
 	for( int i = 0; i < partitionA->size(); ++i) {
 		std::set<unsigned int>* community = (*partitionA)[i];
-		outputFileA << community->size() << " " << precisionPartitionA[i] << " " << recallPartitionA[i] << " " << f1ScorePartitionA[i] << " " << f1ScorePrecisionPartitionA[i] << " " <<  f1ScoreRecallPartitionA[i] << " " << coveragePartitionA[i] / (double) community->size() << "\n";
+		outputFileA << i << "|" << community->size() << "|" << precisionPartitionA[i] << "|" << recallPartitionA[i] << "|" << f1ScorePartitionA[i] << "|" << f1ScorePrecisionPartitionA[i] << "|" <<  f1ScoreRecallPartitionA[i] << "|" << coveragePartitionA[i] / (double) community->size() << "\n";
 	}
 	outputFileA.close();
 
 	std::ofstream outputFileB;
 	outputFileB.open(std::string(argv[3]).append(".partB").c_str());
+    outputFileB << "size|precision|recall|f1score|f1scorePrecision|f1scoreRecall|coverage\n";
 	for( int i = 0; i < partitionB->size(); ++i) {
 		std::set<unsigned int>* community = (*partitionB)[i];
-		outputFileB << community->size() << " " << precisionPartitionB[i] << " " << recallPartitionB[i] << " " << f1ScorePartitionB[i] << " " << f1ScorePrecisionPartitionB[i] << " " <<  f1ScoreRecallPartitionB[i] << " " << coveragePartitionB[i] / (double) community->size() << "\n";
+		outputFileB << i << "|" << community->size() << "|" << precisionPartitionB[i] << "|" << recallPartitionB[i] << "|" << f1ScorePartitionB[i] << "|" << f1ScorePrecisionPartitionB[i] << "|" <<  f1ScoreRecallPartitionB[i] << "|" << coveragePartitionB[i] / (double) community->size() << "\n";
 	}
 	outputFileB.close();
 
