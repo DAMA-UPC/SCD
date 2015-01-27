@@ -261,7 +261,7 @@ int main(int argc, char ** argv)
 
 	std::ofstream outputFileB;
 	outputFileB.open(std::string(argv[3]).append(".partB").c_str());
-    outputFileB << "size|precision|recall|f1score|f1scorePrecision|f1scoreRecall|coverage\n";
+    outputFileB << "id|size|precision|recall|f1score|f1scorePrecision|f1scoreRecall|coverage\n";
 	for( int i = 0; i < partitionB->size(); ++i) {
 		std::set<unsigned int>* community = (*partitionB)[i];
 		outputFileB << i << "|" << community->size() << "|" << precisionPartitionB[i] << "|" << recallPartitionB[i] << "|" << f1ScorePartitionB[i] << "|" << f1ScorePrecisionPartitionB[i] << "|" <<  f1ScoreRecallPartitionB[i] << "|" << coveragePartitionB[i] / (double) community->size() << "\n";
