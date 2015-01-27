@@ -1024,18 +1024,6 @@ namespace scd {
                 CopyPartition(&bestPartition, partition);
                 improve = true;
             }
-/*            printf("Trying to perform step 2\n");
-            PerformImprovementStep2(graph, partition, alfa);
-            printf("Step2: New WCC: %f\n", partition->m_WCC / graph->GetNumNodes());
-            printf("Step2: Best WCC: %f\n", bestPartition.m_WCC / graph->GetNumNodes());
-            if( partition->m_WCC - bestPartition.m_WCC > 0.0f ) {
-                printf("Improvement Step 2\n");
-                remainingTries = lookahead;
-                FreeResources(&bestPartition);
-                CopyPartition(&bestPartition, partition);
-                improve = true;
-            }
-            */
         }
 
         FreeResources(partition);
