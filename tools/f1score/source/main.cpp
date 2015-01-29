@@ -156,7 +156,7 @@ int main(int argc, char ** argv)
 	double* f1ScoreRecallPartitionB = new double[partitionB->size()];
 
     int* bestIdPartitionA = new int[partitionA->size()];
-    int* bestIdPartitionB = new int[partitionA->size()];
+    int* bestIdPartitionB = new int[partitionB->size()];
 
 	double* precisionPartitionA = new double[partitionA->size()];
 	double* precisionPartitionB = new double[partitionB->size()];
