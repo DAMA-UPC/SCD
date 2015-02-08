@@ -28,6 +28,7 @@ ADD_SUBDIRECTORY(./tools/wcc)
 ADD_SUBDIRECTORY(./tools/f1score)
 ADD_SUBDIRECTORY(./tools/selector)
 ADD_SUBDIRECTORY(./tools/cc)
+ADD_SUBDIRECTORY(./tools/communityAnalyzer)
 
 INCLUDE_DIRECTORIES(./include)
 FILE( GLOB_RECURSE SOURCE_FILES "source/*" )
