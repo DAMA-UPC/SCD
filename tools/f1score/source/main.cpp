@@ -260,19 +260,19 @@ int main(int argc, char ** argv)
 
 	std::ofstream outputFileA;
 	outputFileA.open(std::string(argv[3]).append(".partA").c_str());
-    outputFileA << "id|size|precision|recall|f1score|f1scorePrecision|f1scoreRecall|coverage|id2\n";
+    outputFileA << "id|size|precision|recall|f1score|f1scorePrecision|f1scoreRecall|coverage|id2|other_coverage\n";
 	for( int i = 0; i < partitionA->size(); ++i) {
 		std::set<unsigned int>* community = (*partitionA)[i];
-		outputFileA << i << "|" << community->size() << "|" << precisionPartitionA[i] << "|" << recallPartitionA[i] << "|" << f1ScorePartitionA[i] << "|" << f1ScorePrecisionPartitionA[i] << "|" <<  f1ScoreRecallPartitionA[i] << "|" << coveragePartitionA[i] / (double) community->size() << "|" << bestIdPartitionA[i] << "\n";
+		outputFileA << i << "|" << community->size() << "|" << precisionPartitionA[i] << "|" << recallPartitionA[i] << "|" << f1ScorePartitionA[i] << "|" << f1ScorePrecisionPartitionA[i] << "|" <<  f1ScoreRecallPartitionA[i] << "|" << coveragePartitionA[i] / (double) community->size() << "|" << bestIdPartitionA[i] << "|" << coveragePartitionB[bestIdPartitionA[i]] / (double)(*partitionB)[bestIdPartitionA[i]]->size() << "\n";
 	}
 	outputFileA.close();
 
 	std::ofstream outputFileB;
 	outputFileB.open(std::string(argv[3]).append(".partB").c_str());
-    outputFileB << "id|size|precision|recall|f1score|f1scorePrecision|f1scoreRecall|coverage|id2\n";
+    outputFileB << "id|size|precision|recall|f1score|f1scorePrecision|f1scoreRecall|coverage|id2|other_coverage\n";
 	for( int i = 0; i < partitionB->size(); ++i) {
 		std::set<unsigned int>* community = (*partitionB)[i];
-		outputFileB << i << "|" << community->size() << "|" << precisionPartitionB[i] << "|" << recallPartitionB[i] << "|" << f1ScorePartitionB[i] << "|" << f1ScorePrecisionPartitionB[i] << "|" <<  f1ScoreRecallPartitionB[i] << "|" << coveragePartitionB[i] / (double) community->size() << "|" << bestIdPartitionB[i] << "\n";
+		outputFileB << i << "|" << community->size() << "|" << precisionPartitionB[i] << "|" << recallPartitionB[i] << "|" << f1ScorePartitionB[i] << "|" << f1ScorePrecisionPartitionB[i] << "|" <<  f1ScoreRecallPartitionB[i] << "|" << coveragePartitionB[i] / (double) community->size() << "|" << bestIdPartitionB[i] << "|" << coveragePartitionA[bestIdPartitionB[i]] / (double)(*partitionA)[bestIdPartitionB[i]]->size() << "\n";
 	}
 	outputFileB.close();
 
