@@ -115,9 +115,9 @@ int main(int argc, char ** argv) {
     }
 
     CGraph graph;
-    uint64_t totalTime = 0,
-             initTime = 0, 
-             spentTime = 0, 
+    ::uint64_t totalTime = 0,
+             initTime = 0,
+             spentTime = 0,
              loadingTime = 0,
              algorithmTime = 0;
 
