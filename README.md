@@ -4,6 +4,7 @@ SCD
 This program is an implementation of the community detection algorithm described in the papers titled
 
 [High quality, scalable and parallel community detection for large real graphs.](http://www.dama.upc.edu/en/publications/fp546prat.pdf) Arnau Prat-Pérez, David Dominguez-Sal, Josep-Lluis Larriba-Pey - WWW 2014.
+
 [Put Three and Three Together: Triangle-Driven Community Detection.](http://dl.acm.org/citation.cfm?id=2775108) Arnau Prat-Prez, David Dominguez-Sal, Josep-M. Brunat, Josep-Lluis Larriba Pey - TKDD.
 
 
